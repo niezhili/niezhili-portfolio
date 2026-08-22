@@ -134,15 +134,13 @@ const emit = defineEmits(['navigate'])
   color: var(--ink-4);
   text-transform: uppercase;
   margin-bottom: 12px;
-  text-align: center;
 }
 
-.nav { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.nav { display: flex; flex-direction: column; gap: 6px; }
 
 .nav-item {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
   height: 42px;
   padding: 0 12px;
@@ -152,7 +150,7 @@ const emit = defineEmits(['navigate'])
   color: var(--ink-2);
   font-size: 14px;
   font-weight: 500;
-  text-align: center;
+  text-align: left;
   transition: background 0.15s ease;
 }
 .nav-item:hover { background: rgba(255, 255, 255, 0.35); }
@@ -166,14 +164,12 @@ const emit = defineEmits(['navigate'])
 .contact {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 10px;
   margin-top: 6px;
 }
 .contact-row {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
   font-size: 12px;
   color: var(--ink-3);
@@ -187,6 +183,5 @@ const emit = defineEmits(['navigate'])
   font-size: 11px;
   color: var(--ink-4);
   letter-spacing: 0.04em;
-  text-align: center;
 }
 </style>
