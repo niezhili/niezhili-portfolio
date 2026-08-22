@@ -58,7 +58,7 @@ const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
         <span v-for="(filled, i) in dots" :key="i" class="dot" :class="{ filled }" />
       </div>
       <div class="hint" :class="{ err: !!error }">
-        {{ error || (code.length ? `已输入 ${code.length} 位，还差 ${remaining} 位` : '请输入 6 位数字') }}
+        {{ error || (code.length ? `已输入 ${code.length} 位，还差 ${remaining} 位` : '') }}
       </div>
 
       <!-- Keypad -->
