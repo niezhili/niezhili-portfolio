@@ -11,6 +11,7 @@ import EducationView from './views/EducationView.vue'
 import ProjectsView from './views/ProjectsView.vue'
 import CompetitionsView from './views/CompetitionsView.vue'
 import HonorsView from './views/HonorsView.vue'
+import { useProximityGlow } from './composables/useProximityGlow.js'
 
 const route = ref('home')
 const sidebarCollapsed = ref(false)
@@ -41,6 +42,9 @@ onMounted(() => {
   computeScale()
   window.addEventListener('resize', computeScale)
 })
+
+// proximity glow — cards near the cursor light up
+useProximityGlow(canvasEl)
 onBeforeUnmount(() => window.removeEventListener('resize', computeScale))
 
 const eyebrow = computed(() => navItems.find(n => n.key === route.value)?.eyebrow || '')
