@@ -10,12 +10,9 @@ const emit = defineEmits(['toggle-sidebar', 'open-cms'])
 <template>
   <header class="topbar">
     <div class="left">
-      <button
-        v-if="collapsed"
-        class="pill-toggle"
-        @click="emit('toggle-sidebar')"
-      >
-        <span class="chev">›</span> 展开侧栏
+      <button class="pill-toggle" @click="emit('toggle-sidebar')">
+        <span class="chev">{{ collapsed ? '›' : '‹' }}</span>
+        {{ collapsed ? '展开侧栏' : '收起侧栏' }}
       </button>
     </div>
 

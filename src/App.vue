@@ -74,7 +74,6 @@ function onPublish() {
         v-if="!sidebarCollapsed"
         :route="route"
         @navigate="navigate"
-        @toggle-sidebar="toggleSidebar"
       />
 
       <!-- Icon rail (collapsed) -->
