@@ -1,0 +1,62 @@
+/* === Apple Liquid Glass · Blue · Design Tokens === */
+
+:root {
+  /* Surface — page gradient (135deg) */
+  --bg-1: #aecbff; /* (0.682, 0.796, 1) */
+  --bg-2: #7faeff; /* (0.498, 0.682, 1) */
+  --bg-3: #5b94f5; /* (0.357, 0.58, 0.961) */
+
+  /* Glass card surfaces */
+  --glass-fill: rgba(255, 255, 255, 0.45);
+  --glass-fill-strong: rgba(255, 255, 255, 0.62);
+  --glass-stroke: rgba(255, 255, 255, 0.35);
+  --glass-inner: rgba(255, 255, 255, 0.35);
+  --glass-shadow: rgba(31, 31, 89, 0.15);
+  --overlay: rgba(13, 13, 26, 0.45);
+
+  /* Brand blues */
+  --blue-500: #0a84ff;
+  --blue-600: #0062cc;
+  --blue-700: #0040dd;
+  --indigo: #5e5ce6;
+  --cyan: #5ac8fa;
+  --green: #30d158;
+  --purple: #bf5af2;
+  --orange: #ff9f0a;
+
+  /* Text grays */
+  --ink-1: #1d1d1f;
+  --ink-2: #4c4c5e;
+  --ink-3: #55555f;
+  --ink-4: #8a8a93;
+  --ink-on-blue: #ffffff;
+
+  /* Radii */
+  --r-card: 24px;
+  --r-modal: 24px;
+  --r-pill: 17px;
+  --r-chip: 13px;
+  --r-input: 12px;
+  --r-tag: 8px;
+  --r-dot: 999px;
+
+  /* Spacing */
+  --pad-sidebar-x: 40px;
+  --pad-sidebar-y: 32px;
+  --gap-sidebar: 20px;
+  --pad-main: 36px 32px 36px 28px;
+  --gap-main: 24px;
+
+  /* Type */
+  --font-display: 'Instrument Sans', 'PingFang SC', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', 'PingFang SC', system-ui, -apple-system, sans-serif;
+
+  /* Z */
+  --z-base: 1;
+  --z-overlay: 50;
+  --z-modal: 60;
+
+  /* Canvas */
+  --canvas-w: 1280px;
+  --canvas-h: 800px;
+}
