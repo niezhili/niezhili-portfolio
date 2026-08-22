@@ -75,7 +75,7 @@ img { display: block; max-width: 100%; }
   transform-origin: top left;
 }
 
-/* Nav active dot */
+/* Nav dot — single hue (blue) with 5 brightness levels for visual hierarchy */
 .nav-dot {
   width: 24px;
   height: 24px;
@@ -84,9 +84,11 @@ img { display: block; max-width: 100%; }
   flex-shrink: 0;
   box-shadow: 0 4px 8px rgba(10, 132, 255, 0.3);
 }
-.nav-dot.black { background: var(--accent-black); box-shadow: 0 4px 8px rgba(29, 29, 31, 0.3); }
-.nav-dot.red  { background: var(--accent-red); box-shadow: 0 4px 8px rgba(255, 59, 48, 0.3); }
-.nav-dot.gray { background: var(--accent-gray); box-shadow: 0 4px 8px rgba(138, 138, 148, 0.3); }
+.nav-dot.blue-1 { background: #C9D6FF; box-shadow: 0 4px 8px rgba(124, 145, 255, 0.25); }
+.nav-dot.blue-2 { background: #93B1FF; box-shadow: 0 4px 8px rgba(80, 110, 255, 0.28); }
+.nav-dot.blue-3 { background: #5783FF; box-shadow: 0 4px 8px rgba(40,  90, 255, 0.30); }
+.nav-dot.blue-4 { background: #2D5BFF; box-shadow: 0 4px 8px rgba(20,  70, 255, 0.32); }
+.nav-dot.blue-5 { background: var(--blue-500); box-shadow: 0 4px 8px rgba(10, 132, 255, 0.35); }
 
 /* Section eyebrow */
 .eyebrow {

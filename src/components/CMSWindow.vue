@@ -431,9 +431,11 @@ function pvLine(v) {
   width: 6px; height: 6px; border-radius: var(--r-dot);
   background: var(--blue-500);
 }
-.row-dot.black { background: var(--accent-black); }
-.row-dot.red   { background: var(--accent-red); }
-.row-dot.gray  { background: var(--accent-gray); }
+.row-dot.blue-1 { background: #C9D6FF; }
+.row-dot.blue-2 { background: #93B1FF; }
+.row-dot.blue-3 { background: #5783FF; }
+.row-dot.blue-4 { background: #2D5BFF; }
+.row-dot.blue-5 { background: var(--blue-500); }
 
 .sync-status {
   display: flex; align-items: center; gap: 6px;

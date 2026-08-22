@@ -12,11 +12,11 @@ export const profile = {
 }
 
 export const navItems = [
-  { key: 'home', label: '主页', dot: 'blue', eyebrow: '主页 / Home' },
-  { key: 'edu',  label: '教育经历', dot: 'gray',  eyebrow: '教育经历 / Education' },
-  { key: 'proj', label: '项目经历', dot: 'black', eyebrow: '项目经历 / Projects' },
-  { key: 'comp', label: '竞赛经历', dot: 'red', eyebrow: '竞赛经历 / Competitions' },
-  { key: 'honor', label: '荣誉墙', dot: 'red', eyebrow: '荣誉墙 / Honors' }
+  { key: 'home', label: '主页', dot: 'blue-5', eyebrow: '主页 / Home' },
+  { key: 'edu',  label: '教育经历', dot: 'blue-1', eyebrow: '教育经历 / Education' },
+  { key: 'proj', label: '项目经历', dot: 'blue-4', eyebrow: '项目经历 / Projects' },
+  { key: 'comp', label: '竞赛经历', dot: 'blue-3', eyebrow: '竞赛经历 / Competitions' },
+  { key: 'honor', label: '荣誉墙', dot: 'blue-2', eyebrow: '荣誉墙 / Honors' }
 ]
 
 export const heroTags = ['智能镜负责人', '3 项知识产权', '国家级一等奖', '福安项目']
@@ -140,9 +140,9 @@ export const honors = [
 ]
 
 export const cmsNav = [
-  { key: 'profile',  label: '个人资料', active: false, dot: 'blue' },
-  { key: 'edu',      label: '教育经历', active: false, dot: 'gray' },
-  { key: 'proj',     label: '项目经历', active: true,  dot: 'black' },
-  { key: 'comp',     label: '竞赛经历', active: false, dot: 'red' },
-  { key: 'honor',    label: '荣誉墙',   active: false, dot: 'red' }
+  { key: 'profile',  label: '个人资料', active: false, dot: 'blue-5' },
+  { key: 'edu',      label: '教育经历', active: false, dot: 'blue-1' },
+  { key: 'proj',     label: '项目经历', active: true,  dot: 'blue-4' },
+  { key: 'comp',     label: '竞赛经历', active: false, dot: 'blue-3' },
+  { key: 'honor',    label: '荣誉墙',   active: false, dot: 'blue-2' }
 ]
