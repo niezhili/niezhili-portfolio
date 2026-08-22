@@ -27,7 +27,9 @@ const offset = ref({ x: 0, y: 0 })
 function computeScale() {
   const W = window.innerWidth
   const H = window.innerHeight
-  const s = Math.min(W / 1280, H / 800)
+  // never scale up beyond the 1280×800 design — only shrink on narrow screens,
+  // so the canvas always keeps a visible margin of breathing room around it
+  const s = Math.min(1, W / 1280, H / 800)
   scale.value = s
   // center
   const scaledW = 1280 * s
