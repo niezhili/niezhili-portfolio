@@ -8,11 +8,6 @@ const list = computed(() => siteData.projects)
 
 <template>
   <div class="page">
-    <header class="page-head">
-      <div class="eyebrow">PROJECTS</div>
-      <h1 class="page-title">项目经历</h1>
-    </header>
-
     <div class="cards">
       <article v-for="p in list" :key="p.title" class="card glass">
         <div class="card-head">

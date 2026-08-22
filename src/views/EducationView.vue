@@ -5,11 +5,6 @@ const education = siteData.education
 
 <template>
   <div class="page">
-    <header class="page-head">
-      <div class="eyebrow">EDUCATION</div>
-      <h1 class="page-title">教育经历</h1>
-    </header>
-
     <section class="main-card glass">
       <div class="card-head">
         <span class="tag">{{ education.main.period }}</span>

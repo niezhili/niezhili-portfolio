@@ -6,11 +6,6 @@ const competitions = siteData.competitions
 
 <template>
   <div class="page">
-    <header class="page-head">
-      <div class="eyebrow">COMPETITIONS</div>
-      <h1 class="page-title">竞赛经历</h1>
-    </header>
-
     <div class="stats-row">
       <div v-for="s in competitionStats" :key="s.num" class="stat glass">
         <div class="num">{{ s.num }}</div>
