@@ -1,6 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import { navItems } from './data/content.js'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import Sidebar from './components/Sidebar.vue'
 import IconRail from './components/IconRail.vue'
 import TopBar from './components/TopBar.vue'
@@ -49,10 +48,7 @@ onMounted(() => {
 useProximityGlow(canvasEl)
 onBeforeUnmount(() => window.removeEventListener('resize', computeScale))
 
-const eyebrow = computed(() => navItems.find(n => n.key === route.value)?.eyebrow || '')
-
-function navigate(key) { route.value = key }
-function toggleSidebar() { sidebarCollapsed.value = !sidebarCollapsed.value }
+function navigate(key) { route.value = key }function toggleSidebar() { sidebarCollapsed.value = !sidebarCollapsed.value }
 function openCMS() {
   showPasscode.value = true
 }
@@ -90,15 +86,12 @@ function onPublish() {
         v-else
         :route="route"
         @navigate="navigate"
-        @toggle-sidebar="toggleSidebar"
       />
 
       <!-- Main area -->
       <div class="main-area">
         <TopBar
-          :eyebrow="eyebrow"
           :collapsed="sidebarCollapsed"
-          :route="route"
           @toggle-sidebar="toggleSidebar"
           @open-cms="openCMS"
         />

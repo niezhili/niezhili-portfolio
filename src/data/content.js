@@ -12,11 +12,11 @@ export const profile = {
 }
 
 export const navItems = [
-  { key: 'home', label: '主页', dot: 'blue-5', eyebrow: '主页 / Home' },
-  { key: 'edu',  label: '教育经历', dot: 'blue-4', eyebrow: '教育经历 / Education' },
-  { key: 'proj', label: '项目经历', dot: 'blue-3', eyebrow: '项目经历 / Projects' },
-  { key: 'comp', label: '竞赛经历', dot: 'blue-2', eyebrow: '竞赛经历 / Competitions' },
-  { key: 'honor', label: '荣誉墙', dot: 'blue-1', eyebrow: '荣誉墙 / Honors' }
+  { key: 'home', label: '主页', dot: 'blue-5' },
+  { key: 'edu',  label: '教育经历', dot: 'blue-4' },
+  { key: 'proj', label: '项目经历', dot: 'blue-3' },
+  { key: 'comp', label: '竞赛经历', dot: 'blue-2' },
+  { key: 'honor', label: '荣誉墙', dot: 'blue-1' }
 ]
 
 export const heroTags = ['智能镜负责人', '3 项知识产权', '国家级一等奖', '福安项目']

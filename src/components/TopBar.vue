@@ -2,9 +2,7 @@
 import { siteData } from '../store/siteData.js'
 
 defineProps({
-  eyebrow: String,
-  collapsed: Boolean,
-  route: String
+  collapsed: Boolean
 })
 const emit = defineEmits(['toggle-sidebar', 'open-cms'])
 </script>
@@ -19,9 +17,6 @@ const emit = defineEmits(['toggle-sidebar', 'open-cms'])
       >
         <span class="chev">›</span> 展开侧栏
       </button>
-      <div v-else class="crumb">
-        <span class="dot" /> {{ eyebrow }}
-      </div>
     </div>
 
     <div class="right">
@@ -47,20 +42,6 @@ const emit = defineEmits(['toggle-sidebar', 'open-cms'])
 }
 
 .left, .right { display: flex; align-items: center; gap: 12px; }
-
-.crumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-2);
-}
-.crumb .dot {
-  width: 6px; height: 6px; border-radius: var(--r-dot);
-  background: var(--blue-500);
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.18);
-}
 
 .updated {
   font-size: 12px;

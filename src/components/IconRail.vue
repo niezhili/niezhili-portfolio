@@ -2,7 +2,7 @@
 import { profile, navItems } from '../data/content.js'
 
 defineProps({ route: String })
-const emit = defineEmits(['navigate', 'toggle-sidebar'])
+const emit = defineEmits(['navigate'])
 </script>
 
 <template>
@@ -21,13 +21,6 @@ const emit = defineEmits(['navigate', 'toggle-sidebar'])
         <span class="nav-dot" :class="item.dot" />
       </button>
     </nav>
-
-    <button class="rail-footer" title="展开侧栏" @click="emit('toggle-sidebar')">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M5 12h14M13 6l6 6-6 6"
-          stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
   </aside>
 </template>
 
@@ -90,18 +83,4 @@ const emit = defineEmits(['navigate', 'toggle-sidebar'])
 }
 .rail-item:hover { background: rgba(255, 255, 255, 0.5); }
 .rail-item.active { background: #fff; box-shadow: 0 4px 10px rgba(31, 31, 89, 0.1); }
-
-.rail-footer {
-  margin-top: auto;
-  padding: 8px;
-  border: none;
-  background: transparent;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ink-3);
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.rail-footer:hover { background: rgba(255, 255, 255, 0.5); color: var(--blue-500); }
 </style>
