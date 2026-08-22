@@ -3,26 +3,35 @@ import { ref, computed } from 'vue'
 
 const emit = defineEmits(['close', 'success'])
 
+const PASSCODE = '051014'
+
 const code = ref('')
 const error = ref('')
+const shaking = ref(false)
 
 const dots = computed(() => Array.from({ length: 6 }, (_, i) => i < code.value.length))
 
 function pressKey(k) {
+  if (shaking.value) return
   error.value = ''
   if (k === 'del') {
     code.value = code.value.slice(0, -1)
   } else if (code.value.length < 6) {
     code.value += k
+    if (code.value.length === 6) autoVerify()
   }
 }
 
-function verify() {
-  // demo passcode: any 6 digits succeeds; otherwise show error
-  if (code.value.length === 6 && /^\d{6}$/.test(code.value)) {
+function autoVerify() {
+  if (code.value === PASSCODE) {
     emit('success')
   } else {
-    error.value = '请输入 6 位数字密码'
+    error.value = '密码错误，请重试'
+    shaking.value = true
+    setTimeout(() => {
+      code.value = ''
+      shaking.value = false
+    }, 500)
   }
 }
 
@@ -45,7 +54,7 @@ const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
       <h2 class="title">内容管理 · 身份验证</h2>
       <p class="sub">请输入 6 位管理密码以编辑内容</p>
 
-      <div class="dots">
+      <div class="dots" :class="{ shake: shaking }">
         <span v-for="(filled, i) in dots" :key="i" class="dot" :class="{ filled }" />
       </div>
       <div class="hint" :class="{ err: !!error }">
@@ -72,9 +81,6 @@ const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
         </button>
       </div>
 
-      <button class="btn-primary verify" :disabled="code.length !== 6" @click="verify">
-        验证并进入编辑
-      </button>
       <button class="forgot">忘记密码?</button>
     </div>
   </div>
@@ -136,6 +142,15 @@ const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
 }
 
 .dots { display: flex; gap: 14px; margin-bottom: 12px; }
+.dots.shake { animation: shake 0.4s ease; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+.dot.err { border-color: #ff3b30; }
 .dot {
   width: 14px; height: 14px;
   border-radius: var(--r-dot);
@@ -174,9 +189,6 @@ const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
 .key:hover:not(:disabled) { background: #fff; transform: translateY(-1px); }
 .key:active:not(:disabled) { transform: scale(0.97); }
 .key.ghost { visibility: hidden; }
-
-.verify { width: 100%; height: 44px; font-size: 14px; }
-.verify:disabled { background: #c7c7cd; box-shadow: none; cursor: not-allowed; }
 
 .forgot {
   margin-top: 14px;
