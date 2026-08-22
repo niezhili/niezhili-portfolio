@@ -155,8 +155,10 @@ function onPublish() {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 4px;
-  margin-right: -4px;
+  /* breathing room so hover-scaled cards (scale 1.02) aren't clipped —
+     padding + equal negative margin keeps the visual layout unchanged */
+  padding: 10px 14px 10px 10px;
+  margin: -10px -14px -10px -10px;
 }
 .page-scroll::-webkit-scrollbar { width: 6px; }
 .page-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); border-radius: 3px; }

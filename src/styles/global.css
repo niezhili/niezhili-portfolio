@@ -38,7 +38,16 @@ img { display: block; max-width: 100%; }
     0 0 calc(var(--glow, 0) * 56px) rgba(10, 132, 255, calc(var(--glow, 0) * 0.55)),
     inset 0 0 calc(var(--glow, 0) * 24px) rgba(255, 255, 255, calc(var(--glow, 0) * 0.25));
   border-color: rgba(255, 255, 255, calc(0.35 + var(--glow, 0) * 0.5));
-  transition: box-shadow 0.12s ease, border-color 0.12s ease;
+  transition: box-shadow 0.12s ease, border-color 0.12s ease, transform 0.18s ease;
+}
+
+/* Hover lift: content cards gently scale up under the cursor.
+   Full-bleed containers (sidebar, modal, CMS window & its internal panels)
+   keep their geometry — scaling a layout shell would look wrong. */
+.glass:hover { transform: scale(1.02); }
+.modal:hover, .cms-window:hover, .sidebar:hover,
+.cms-nav:hover, .editor:hover, .preview:hover, .sync-log:hover {
+  transform: none;
 }
 
 /* Primary pill button — black accent (CTA) */
