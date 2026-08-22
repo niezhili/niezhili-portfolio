@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { navItems } from './data/content.js'
 import Sidebar from './components/Sidebar.vue'
 import IconRail from './components/IconRail.vue'
 import TopBar from './components/TopBar.vue'
@@ -44,6 +45,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => window.removeEventListener('resize', computeScale))
 
+// current page title (e.g. 项目经历) — shown centered in the top bar
+// as the expand button when the sidebar is collapsed
+const currentTitle = computed(() => navItems.find(n => n.key === route.value)?.label || '')
+
 function navigate(key) { route.value = key }
 function toggleSidebar() { sidebarCollapsed.value = !sidebarCollapsed.value }
 function openCMS() {
@@ -63,9 +68,9 @@ function onPublish() {
 
 <template>
   <div ref="stageEl" class="canvas-stage">
-      <div
-        class="canvas-root"
-        :style="{
+    <div
+      class="canvas-root"
+      :style="{
         transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`
       }"
     >
@@ -87,6 +92,7 @@ function onPublish() {
       <div class="main-area">
         <TopBar
           :collapsed="sidebarCollapsed"
+          :title="currentTitle"
           @toggle-sidebar="toggleSidebar"
           @open-cms="openCMS"
         />
