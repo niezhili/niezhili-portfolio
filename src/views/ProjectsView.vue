@@ -48,7 +48,7 @@ const list = computed(() =>
 .title { margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--ink-1); }
 .sub { margin: 4px 0 0; font-size: 12px; color: var(--ink-3); }
 .desc { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
-.tag.blue { background: var(--blue-500); }
-.tag.cyan { background: var(--cyan); }
-.tag.indigo { background: var(--indigo); }
+.tag.black { background: var(--accent-black); }
+.tag.red { background: var(--accent-red); }
+.tag.gray { background: var(--accent-gray); }
 </style>

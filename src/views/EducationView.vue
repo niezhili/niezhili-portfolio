@@ -83,8 +83,8 @@ import { education } from '../data/content.js'
   font-size: 11px; font-weight: 600;
   color: #fff;
 }
-.row-tag.tone-0 { background: var(--blue-500); }
-.row-tag.tone-1 { background: var(--indigo); }
-.row-tag.tone-2 { background: var(--purple); }
+.row-tag.tone-0 { background: var(--accent-gray); }
+.row-tag.tone-1 { background: var(--blue-500); }
+.row-tag.tone-2 { background: var(--accent-black); }
 .row-text { font-size: 13px; color: var(--ink-2); }
 </style>

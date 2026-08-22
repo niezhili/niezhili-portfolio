@@ -115,11 +115,11 @@ const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
   transform: translateX(-50%);
   width: 56px; height: 56px;
   border-radius: var(--r-dot);
-  background: var(--blue-500);
+  background: var(--accent-black);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 20px rgba(10, 132, 255, 0.45);
+  box-shadow: 0 8px 20px rgba(29, 29, 31, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.25);
 }
 
 .title {
@@ -144,8 +144,8 @@ const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
   transition: all 0.15s ease;
 }
 .dot.filled {
-  background: var(--blue-500);
-  border-color: var(--blue-500);
+  background: var(--accent-black);
+  border-color: var(--accent-black);
   transform: scale(1.1);
 }
 .hint { font-size: 12px; color: var(--ink-4); margin-bottom: 24px; min-height: 18px; }
@@ -176,7 +176,7 @@ const keys = ['1','2','3','4','5','6','7','8','9','','0','del']
 .key.ghost { visibility: hidden; }
 
 .verify { width: 100%; height: 44px; font-size: 14px; }
-.verify:disabled { background: #b6d4ff; box-shadow: none; cursor: not-allowed; }
+.verify:disabled { background: #c7c7cd; box-shadow: none; cursor: not-allowed; }
 
 .forgot {
   margin-top: 14px;

@@ -30,7 +30,7 @@ const emit = defineEmits(['open-cms'])
     <div class="featured-row">
       <section class="featured glass">
         <div class="featured-head">
-          <span class="tag">{{ siteData.featured.badge }}</span>
+          <span class="tag tag-lead">{{ siteData.featured.badge }}</span>
           <span class="period">{{ siteData.featured.period }}</span>
         </div>
         <h2 class="feat-title">{{ siteData.featured.title }}</h2>
@@ -43,7 +43,7 @@ const emit = defineEmits(['open-cms'])
 
       <aside class="side-stack">
         <div v-for="p in sideProjects" :key="p.title" class="side-card glass">
-          <span class="tag outline">{{ p.badge }}</span>
+          <span class="tag outline" :class="p.badge === '国家级一等奖' ? 'red' : 'gray'">{{ p.badge }}</span>
           <h3 class="side-title">{{ p.title }}</h3>
           <p class="side-desc">{{ p.desc }}</p>
           <div class="side-meta">{{ p.meta }}</div>
@@ -86,13 +86,15 @@ const emit = defineEmits(['open-cms'])
   font-family: var(--font-display);
   font-size: 28px;
   font-weight: 600;
-  color: var(--blue-500);
+  color: var(--accent-black);
   line-height: 1;
 }
+.stat:nth-child(3) .stat-num { color: var(--accent-red); }
 .stat-label { font-size: 12px; color: var(--ink-3); font-weight: 500; }
 
 .featured-row { display: grid; grid-template-columns: 1fr 260px; gap: 16px; }
 .featured { padding: 22px 26px; }
+.tag-lead { background: var(--accent-black); }
 .featured-head {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 14px;

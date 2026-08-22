@@ -9,7 +9,9 @@ const emit = defineEmits(['navigate'])
   <aside class="sidebar glass">
     <!-- Brand -->
     <div class="brand">
-      <div class="avatar">{{ profile.avatarChar }}</div>
+      <div class="avatar">
+        <img :src="profile.avatar" :alt="profile.name" />
+      </div>
       <div class="brand-text">
         <div class="name">{{ profile.name }}</div>
         <div class="name-en">{{ profile.nameEn }}</div>
@@ -44,7 +46,7 @@ const emit = defineEmits(['navigate'])
         <span class="dot blue" /> {{ profile.email }}
       </div>
       <div class="contact-row">
-        <span class="dot purple" /> {{ profile.city }}
+        <span class="dot gray" /> {{ profile.city }}
       </div>
     </div>
 
@@ -80,14 +82,18 @@ const emit = defineEmits(['navigate'])
   height: 64px;
   border-radius: var(--r-dot);
   background: #fff;
-  color: var(--ink-1);
-  font-family: var(--font-display);
-  font-size: 30px;
-  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(31, 31, 89, 0.18);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 16px rgba(31, 31, 89, 0.18);
+  flex-shrink: 0;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .name {
@@ -167,7 +173,7 @@ const emit = defineEmits(['navigate'])
 }
 .dot { width: 6px; height: 6px; border-radius: var(--r-dot); flex-shrink: 0; }
 .dot.blue   { background: var(--blue-500); }
-.dot.purple { background: var(--purple); }
+.dot.gray { background: var(--accent-gray); }
 
 .footer {
   margin-top: auto;

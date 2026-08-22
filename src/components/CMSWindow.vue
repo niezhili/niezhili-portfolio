@@ -143,7 +143,7 @@ function handlePublish() {
 
           <div class="preview-card">
             <div class="row-between">
-              <span class="tag outline">{{ form.badge }}</span>
+              <span class="tag black">{{ form.badge }}</span>
               <span class="muted-sm">{{ form.period }}</span>
             </div>
             <h4 class="pv-title">{{ previewName }}</h4>
@@ -288,7 +288,9 @@ function handlePublish() {
   width: 6px; height: 6px; border-radius: var(--r-dot);
   background: var(--blue-500);
 }
-.row-dot.green { background: var(--green); }
+.row-dot.black { background: var(--accent-black); }
+.row-dot.red   { background: var(--accent-red); }
+.row-dot.gray  { background: var(--accent-gray); }
 
 .sync-status {
   display: flex; align-items: center; gap: 6px;

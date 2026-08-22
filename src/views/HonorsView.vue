@@ -10,7 +10,7 @@ import { honors } from '../data/content.js'
 
     <div class="grid">
       <article v-for="h in honors" :key="h.title" class="card glass">
-        <div class="eyebrow">{{ h.eyebrow }}</div>
+        <div class="eyebrow" :class="h.accent">{{ h.eyebrow }}</div>
         <h2 class="title">{{ h.title }}</h2>
         <p class="desc">{{ h.desc }}</p>
       </article>
@@ -32,6 +32,9 @@ import { honors } from '../data/content.js'
 }
 .card { padding: 22px 26px; display: flex; flex-direction: column; gap: 8px; }
 .card .eyebrow { color: var(--blue-500); margin-bottom: 4px; }
+.card .eyebrow.red { color: var(--accent-red); }
+.card .eyebrow.black { color: var(--accent-black); }
+.card .eyebrow.gray { color: var(--accent-gray); }
 .title { margin: 0; font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--ink-1); }
 .desc { margin: 0; font-size: 12px; color: var(--ink-2); line-height: 1.55; }
 </style>

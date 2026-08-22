@@ -18,11 +18,14 @@
   --blue-500: #0a84ff;
   --blue-600: #0062cc;
   --blue-700: #0040dd;
-  --indigo: #5e5ce6;
-  --cyan: #5ac8fa;
-  --green: #30d158;
-  --purple: #bf5af2;
-  --orange: #ff9f0a;
+
+  /* Accent palette — blue base + red / black / gray semantics */
+  --accent-red: #ff3b30;   /* awards · 国家级奖项 */
+  --accent-black: #1d1d1f; /* CTA · featured · LEAD */
+  --accent-black-hover: #3a3a40;
+  --accent-gray: #8a8a94;  /* in-progress chips */
+  --accent-gray-text: #55555f; /* muted numbers · icons */
+  --green: #30d158;        /* semantic: online / synced only */
 
   /* Text grays */
   --ink-1: #1d1d1f;

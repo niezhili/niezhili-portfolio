@@ -7,7 +7,7 @@ const emit = defineEmits(['navigate'])
 
 <template>
   <aside class="icon-rail">
-    <div class="avatar-sm">{{ profile.avatarChar }}</div>
+    <div class="avatar-sm"><img :src="profile.avatar" :alt="profile.name" /></div>
 
     <nav class="rail-nav">
       <button
@@ -56,14 +56,18 @@ const emit = defineEmits(['navigate'])
   height: 44px;
   border-radius: var(--r-dot);
   background: #fff;
-  color: var(--ink-1);
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(31, 31, 89, 0.18);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(31, 31, 89, 0.18);
+  flex-shrink: 0;
+}
+.avatar-sm img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .rail-nav {

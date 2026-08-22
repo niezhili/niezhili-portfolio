@@ -40,8 +40,9 @@ import { competitionStats, competitions } from '../data/content.js'
 
 .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .stat { padding: 22px 24px; }
-.num { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--blue-500); line-height: 1; }
-.num.alt { color: var(--indigo); }
+.num { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--accent-red); line-height: 1; }
+.stat:nth-child(2) .num { color: var(--accent-black); }
+.stat:nth-child(3) .num { color: var(--accent-gray); }
 .label { margin-top: 6px; font-size: 12px; color: var(--ink-3); }
 
 .cards { display: flex; flex-direction: column; gap: 14px; }
@@ -50,6 +51,6 @@ import { competitionStats, competitions } from '../data/content.js'
 .title { margin: 0; font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--ink-1); }
 .sub { margin: 4px 0 0; font-size: 12px; color: var(--ink-3); }
 .desc { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
-.tag.cyan { background: var(--cyan); }
-.tag.indigo { background: var(--indigo); }
+.tag.red { background: var(--accent-red); }
+.tag.gray { background: var(--accent-gray); }
 </style>
