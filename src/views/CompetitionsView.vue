@@ -31,10 +31,6 @@ const competitions = siteData.competitions
 <style scoped>
 .page { display: flex; flex-direction: column; gap: 18px; }
 
-.page-head { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; }
-.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; color: var(--blue-500); text-transform: uppercase; }
-.page-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--ink-1); margin: 0; letter-spacing: -0.01em; }
-
 .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .stat { padding: 22px 24px; }
 .num { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--accent-red); line-height: 1; }

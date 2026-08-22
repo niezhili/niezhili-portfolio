@@ -5,10 +5,6 @@ const honors = siteData.honors
 
 <template>
   <div class="page">
-    <header class="page-head">
-      <h1 class="page-title-large">奖项 · 知识产权 · 专业认证</h1>
-    </header>
-
     <div class="grid">
       <article v-for="h in honors" :key="h.title" class="card glass">
         <div class="eyebrow" :class="h.accent">{{ h.eyebrow }}</div>
@@ -21,10 +17,6 @@ const honors = siteData.honors
 
 <style scoped>
 .page { display: flex; flex-direction: column; gap: 18px; }
-
-.page-head { display: flex; flex-direction: column; gap: 4px; padding: 0 4px; }
-.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; color: var(--blue-500); text-transform: uppercase; }
-.page-title-large { font-family: var(--font-display); font-size: 22px; font-weight: 600; color: var(--ink-1); margin: 0; letter-spacing: -0.01em; }
 
 .grid {
   display: grid;
