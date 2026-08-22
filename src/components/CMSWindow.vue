@@ -394,6 +394,7 @@ function pvLine(v) {
   padding: 18px;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .cms-nav { gap: 4px; }
@@ -456,6 +457,7 @@ function pvLine(v) {
 
 .editor-scroll {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding-right: 6px;
 }
