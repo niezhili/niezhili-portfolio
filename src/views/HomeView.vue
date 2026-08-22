@@ -1,5 +1,5 @@
 <script setup>
-import { profile, heroTags, stats, featured, sideProjects } from '../data/content.js'
+import { profile } from '../data/content.js'
 import { siteData } from '../store/siteData.js'
 import featImg from '../assets/feat-smart-mirror.png'
 const emit = defineEmits(['open-cms'])
@@ -12,14 +12,14 @@ const emit = defineEmits(['open-cms'])
       <section class="hero glass">
         <div class="eyebrow">PORTFOLIO · {{ profile.year }}</div>
         <h1 class="name">{{ profile.name }}</h1>
-        <p class="bio">用产品思维连接技术与业务 —— 通信工程背景的产品 / 项目经理</p>
+        <p class="bio">{{ siteData.hero.bio }}</p>
         <div class="tags">
-          <span v-for="t in heroTags" :key="t" class="chip">{{ t }}</span>
+          <span v-for="t in siteData.hero.tags" :key="t" class="chip">{{ t }}</span>
         </div>
       </section>
 
       <aside class="stats">
-        <div v-for="s in stats" :key="s.num" class="stat glass">
+        <div v-for="s in siteData.stats" :key="s.num" class="stat glass">
           <div class="stat-num">{{ s.num }}</div>
           <div class="stat-label">{{ s.label }}</div>
         </div>
@@ -36,13 +36,13 @@ const emit = defineEmits(['open-cms'])
         <h2 class="feat-title">{{ siteData.featured.title }}</h2>
         <p class="feat-desc">{{ siteData.featured.desc }}</p>
         <div class="feat-img">
-          <img :src="featImg" :alt="featured.imageAlt" />
+          <img :src="featImg" :alt="siteData.featured.imageAlt" />
         </div>
-        <div class="feat-foot">{{ featured.footTags }}</div>
+        <div class="feat-foot">{{ siteData.featured.footTags }}</div>
       </section>
 
       <aside class="side-stack">
-        <div v-for="p in sideProjects" :key="p.title" class="side-card glass">
+        <div v-for="p in siteData.sideProjects" :key="p.title" class="side-card glass">
           <span class="tag outline" :class="p.badge === '国家级一等奖' ? 'red' : 'gray'">{{ p.badge }}</span>
           <h3 class="side-title">{{ p.title }}</h3>
           <p class="side-desc">{{ p.desc }}</p>

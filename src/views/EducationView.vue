@@ -1,5 +1,6 @@
 <script setup>
-import { education } from '../data/content.js'
+import { siteData } from '../store/siteData.js'
+const education = siteData.education
 </script>
 
 <template>

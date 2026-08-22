@@ -1,16 +1,9 @@
 <script setup>
 import { computed } from 'vue'
-import { projects } from '../data/content.js'
 import { siteData } from '../store/siteData.js'
 
-// Card 1 (智能镜) is CMS-managed — reads live from the persistent store
-const list = computed(() =>
-  projects.map((p, i) =>
-    i === 0
-      ? { ...p, title: siteData.featured.title, desc: siteData.featured.desc }
-      : p
-  )
-)
+// All project cards are CMS-managed — read live from the persistent store
+const list = computed(() => siteData.projects)
 </script>
 
 <template>

@@ -1,5 +1,6 @@
 <script setup>
-import { honors } from '../data/content.js'
+import { siteData } from '../store/siteData.js'
+const honors = siteData.honors
 </script>
 
 <template>

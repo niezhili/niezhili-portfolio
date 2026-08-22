@@ -1,5 +1,7 @@
 <script setup>
-import { competitionStats, competitions } from '../data/content.js'
+import { siteData } from '../store/siteData.js'
+const competitionStats = siteData.competitionStats
+const competitions = siteData.competitions
 </script>
 
 <template>

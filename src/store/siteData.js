@@ -1,17 +1,39 @@
 // Shared reactive site data with localStorage persistence.
-// CMS edits flow into this store; front-page views read from it,
-// so changes survive refresh and update the front pages live.
+// ALL editable content lives here — initialized from content.js defaults,
+// so the CMS starts 100% consistent with the front-end pages.
+// Views read from this store; CMS edits update it; changes survive refresh.
 import { reactive, watch } from 'vue'
+import {
+  heroTags,
+  stats,
+  featured,
+  sideProjects,
+  education,
+  projects,
+  competitionStats,
+  competitions,
+  honors
+} from '../data/content.js'
 
-const STORAGE_KEY = 'portfolio-cms-data'
+const STORAGE_KEY = 'portfolio-cms-data-v2'
+
+function clone(x) {
+  return JSON.parse(JSON.stringify(x))
+}
 
 const defaults = {
-  featured: {
-    badge: 'LEAD · 项目负责人',
-    period: '2024 – 2025',
-    title: '智能镜产品设计',
-    desc: '主导智能镜产品从 0 到 1：需求调研、功能定义、交互设计与开发跟进，协同软硬件团队推进落地。'
+  hero: {
+    bio: '用产品思维连接技术与业务 —— 通信工程背景的产品 / 项目经理',
+    tags: [...heroTags]
   },
+  stats: clone(stats),
+  featured: clone(featured),
+  sideProjects: clone(sideProjects),
+  education: clone(education),
+  projects: clone(projects),
+  competitionStats: clone(competitionStats),
+  competitions: clone(competitions),
+  honors: clone(honors),
   lastPublishedAt: '2026.08'
 }
 
@@ -27,7 +49,14 @@ function loadSaved() {
 const saved = loadSaved()
 
 export const siteData = reactive({
-  featured: { ...defaults.featured, ...(saved && saved.featured) },
+  ...clone(defaults),
+  ...(saved || {}),
+  // re-clone defaults for keys missing in saved (partial legacy saves)
+  ...Object.fromEntries(
+    Object.keys(defaults)
+      .filter(k => !(saved && k in saved))
+      .map(k => [k, clone(defaults[k])])
+  ),
   lastPublishedAt: (saved && saved.lastPublishedAt) || defaults.lastPublishedAt
 })
 
@@ -50,9 +79,8 @@ export function publish() {
   siteData.lastPublishedAt = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-// Reset content back to design-spec defaults
+// Reset all content back to design-spec defaults
 export function resetToDefaults() {
-  Object.assign(siteData.featured, defaults.featured)
-  siteData.lastPublishedAt = defaults.lastPublishedAt
+  Object.assign(siteData, clone(defaults))
   try { localStorage.removeItem(STORAGE_KEY) } catch (e) { /* ignore */ }
 }
