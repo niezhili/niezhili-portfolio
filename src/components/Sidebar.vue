@@ -2,7 +2,7 @@
 import { profile, navItems } from '../data/content.js'
 
 defineProps({ route: String })
-const emit = defineEmits(['navigate'])
+const emit = defineEmits(['navigate', 'toggle-sidebar'])
 </script>
 
 <template>
@@ -50,6 +50,9 @@ const emit = defineEmits(['navigate'])
       </div>
     </div>
 
+    <button class="collapse-btn" @click="emit('toggle-sidebar')">
+      <span class="chev">‹</span> 收起侧栏
+    </button>
     <div class="footer">Copyright 2026 · Portfolio</div>
   </aside>
 </template>
@@ -178,8 +181,27 @@ const emit = defineEmits(['navigate'])
 .dot.blue   { background: var(--blue-500); }
 .dot.gray { background: var(--accent-gray); }
 
-.footer {
+.collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
   margin-top: auto;
+  width: fit-content;
+  border: 1px solid var(--glass-stroke);
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.collapse-btn:hover { background: var(--blue-500); border-color: var(--blue-500); color: #fff; }
+.collapse-btn .chev { font-size: 16px; line-height: 1; font-weight: 700; }
+
+.footer {
+  margin-top: 14px;
   font-size: 11px;
   color: var(--ink-4);
   letter-spacing: 0.04em;

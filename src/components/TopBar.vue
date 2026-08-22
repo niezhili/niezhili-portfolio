@@ -13,7 +13,7 @@ const emit = defineEmits(['toggle-sidebar', 'open-cms'])
   <header class="topbar">
     <div class="left">
       <button
-        v-if="collapsed && route === 'honor'"
+        v-if="collapsed"
         class="pill-toggle"
         @click="emit('toggle-sidebar')"
       >

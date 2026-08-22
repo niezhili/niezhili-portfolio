@@ -82,6 +82,7 @@ function onPublish() {
         v-if="!sidebarCollapsed"
         :route="route"
         @navigate="navigate"
+        @toggle-sidebar="toggleSidebar"
       />
 
       <!-- Icon rail (collapsed) -->
@@ -89,6 +90,7 @@ function onPublish() {
         v-else
         :route="route"
         @navigate="navigate"
+        @toggle-sidebar="toggleSidebar"
       />
 
       <!-- Main area -->
