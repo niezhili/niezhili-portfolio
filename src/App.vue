@@ -10,7 +10,6 @@ import EducationView from './views/EducationView.vue'
 import ProjectsView from './views/ProjectsView.vue'
 import CompetitionsView from './views/CompetitionsView.vue'
 import HonorsView from './views/HonorsView.vue'
-import { useProximityGlow } from './composables/useProximityGlow.js'
 
 const route = ref('home')
 const sidebarCollapsed = ref(false)
@@ -19,7 +18,6 @@ const showCMS = ref(false)
 
 // auto-scale
 const stageEl = ref(null)
-const canvasEl = ref(null)
 const scale = ref(1)
 const offset = ref({ x: 0, y: 0 })
 
@@ -44,11 +42,10 @@ onMounted(() => {
   window.addEventListener('resize', computeScale)
 })
 
-// proximity glow — cards near the cursor light up
-useProximityGlow(canvasEl)
 onBeforeUnmount(() => window.removeEventListener('resize', computeScale))
 
-function navigate(key) { route.value = key }function toggleSidebar() { sidebarCollapsed.value = !sidebarCollapsed.value }
+function navigate(key) { route.value = key }
+function toggleSidebar() { sidebarCollapsed.value = !sidebarCollapsed.value }
 function openCMS() {
   showPasscode.value = true
 }
@@ -66,10 +63,9 @@ function onPublish() {
 
 <template>
   <div ref="stageEl" class="canvas-stage">
-    <div
-      ref="canvasEl"
-      class="canvas-root"
-      :style="{
+      <div
+        class="canvas-root"
+        :style="{
         transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`
       }"
     >
