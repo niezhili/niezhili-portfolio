@@ -5,7 +5,7 @@ export const profile = {
   name: '聂志理',
   nameEn: 'NIE ZHILI',
   roles: ['产品经理', '项目经理'],
-  email: 'zhili.nie@example.com',
+  email: 'work4niezhili@163.com',
   city: '杭州 · 浙江',
   year: '2027届通信工程'
 }
