@@ -73,7 +73,9 @@ const showAvatarZoom = ref(false)
 .sidebar {
   position: relative;
   width: 100%;
-  height: 100%;
+  /* 高度随内容收缩：不再拉满画布，去掉「联系」与页脚之间的大片留白，
+     缩略态（台前调度）比例更协调 */
+  height: fit-content;
   padding: var(--pad-sidebar-y) var(--pad-sidebar-x);
   border-right: none;
   display: flex;
@@ -200,7 +202,6 @@ const showAvatarZoom = ref(false)
 .dot.gray { background: var(--accent-gray); }
 
 .footer {
-  margin-top: auto;
   font-size: 11px;
   color: var(--ink-4);
   letter-spacing: 0.04em;

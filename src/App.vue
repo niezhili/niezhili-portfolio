@@ -181,7 +181,9 @@ function onPublish() {
   left: 16px;
   top: 50%;
   width: 280px;
-  height: calc(100% - 32px);
+  /* 高度随侧栏内容收缩（而非拉满画布），缩略态比例更紧凑协调 */
+  height: fit-content;
+  max-height: calc(100% - 32px);
   z-index: 45;
   transform-origin: left center;
   transform:
