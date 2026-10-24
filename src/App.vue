@@ -24,28 +24,16 @@ function initialRoute() {
 
 const route = ref(initialRoute())
 
-// 台前调度式侧栏：常态只留 56px 缩略条，鼠标进入左侧地带才浮起完整面板。
+// 台前调度式侧栏：常态是整窗缩略图，**点击**后才放大为完整面板（hover 只做轻微抬起预告，不展开）。
 // 面板是浮层（absolute + 更高 z-index），主区域宽度不变，页面不重排、不跳滚动位置。
+// 收起方式：点击导航项、点击面板外内容区、或按 ESC。
 // 开发环境可用 ?sb=1 直接打开面板（截图/联调用），生产构建忽略该参数
 const __sbParam = new URLSearchParams(location.search).get('sb')
 const sidebarOpen = ref(import.meta.env.DEV && !!__sbParam)
 // 面板浮起时内容的表现：overlay = 原样被覆盖；shrink = 整体后退缩小（更像台前调度）
 const asideMode = ref(__sbParam === 'push' ? 'shrink' : 'overlay')
-let openTimer = null
-let closeTimer = null
 
-function enterAside() {
-  clearTimeout(closeTimer)
-  if (sidebarOpen.value) return
-  clearTimeout(openTimer)
-  openTimer = setTimeout(() => { sidebarOpen.value = true }, 180)
-}
-function leaveAside() {
-  clearTimeout(openTimer)
-  clearTimeout(closeTimer)
-  closeTimer = setTimeout(() => { sidebarOpen.value = false }, 420)
-}
-// 缩略态下的点击只负责放大，不触发内部导航（避免快速点击点到缩小的菜单项）
+// 缩略态下的点击只负责放大，不触发内部导航（避免点到缩小的菜单项）
 function onDockClick(e) {
   if (sidebarOpen.value) return
   e.stopPropagation()
@@ -53,9 +41,17 @@ function onDockClick(e) {
   sidebarOpen.value = true
 }
 
+// 面板打开时，点击内容区任意位置收起
+function onMainClick() {
+  if (sidebarOpen.value) sidebarOpen.value = false
+}
+
+function onKey(e) {
+  if (e.key === 'Escape' && sidebarOpen.value) sidebarOpen.value = false
+}
+
 function onNav(key) {
   navigate(key)
-  clearTimeout(closeTimer)
   sidebarOpen.value = false
 }
 const showPasscode = ref(false)
@@ -85,9 +81,13 @@ function computeScale() {
 onMounted(() => {
   computeScale()
   window.addEventListener('resize', computeScale)
+  window.addEventListener('keydown', onKey)
 })
 
-onBeforeUnmount(() => window.removeEventListener('resize', computeScale))
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', computeScale)
+  window.removeEventListener('keydown', onKey)
+})
 
 // current page title (e.g. 项目经历) — shown centered in the top bar
 const currentTitle = computed(() => navItems.find(n => n.key === route.value)?.label || '')
@@ -123,22 +123,20 @@ function onPublish() {
         transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`
       }"
     >
-      <!-- 侧栏窗口：常态缩小成缩略图，hover 原位放大为完整面板 -->
+      <!-- 侧栏窗口：常态缩小成缩略图，点击后原位放大为完整面板 -->
       <div
         class="sidebar-dock"
         :class="{ 'is-open': sidebarOpen }"
-        @mouseenter="enterAside"
-        @mouseleave="leaveAside"
         @click.capture="onDockClick"
       >
         <Sidebar :route="route" @navigate="onNav" />
       </div>
 
-      <!-- 面板浮起时轻微压暗内容，聚焦前景 -->
+      <!-- 面板浮起时轻微压暗内容，聚焦前景（pointer-events:none，点击会穿透到内容区触发收起） -->
       <div class="dim" :class="{ on: sidebarOpen }" />
 
-      <!-- Main area -->
-      <div class="main-area">
+      <!-- Main area：点击内容区收起侧栏面板 -->
+      <div class="main-area" @click="onMainClick">
         <TopBar
           :title="currentTitle"
           @open-cms="openCMS"
