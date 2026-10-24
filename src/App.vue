@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { navItems } from './data/content.js'
-import Sidebar from './components/Sidebar.vue'
+import StageStrip from './components/StageStrip.vue'
 import TopBar from './components/TopBar.vue'
 import PasscodeModal from './components/PasscodeModal.vue'
 import CMSWindow from './components/CMSWindow.vue'
@@ -23,36 +23,9 @@ function initialRoute() {
 
 const route = ref(initialRoute())
 
-// 台前调度式侧栏：常态是整窗缩略图，**点击**后才放大为完整面板（hover 只做轻微抬起预告，不展开）。
-// 面板是浮层（absolute + 更高 z-index），主区域宽度不变，页面不重排、不跳滚动位置。
-// 收起方式：点击导航项、点击面板外内容区、或按 ESC。
-// 开发环境可用 ?sb=1 直接打开面板（截图/联调用），生产构建忽略该参数
-const __sbParam = new URLSearchParams(location.search).get('sb')
-const sidebarOpen = ref(import.meta.env.DEV && !!__sbParam)
-// 面板浮起时内容的表现：overlay = 原样被覆盖；shrink = 整体后退缩小（更像台前调度）
-const asideMode = ref(__sbParam === 'push' ? 'shrink' : 'overlay')
+// 台前调度多窗口条：左侧纵向堆叠迷你窗口（头像 + 5 个页面），
+// 点击哪扇窗口主舞台就切到哪一页，窗口条常驻可见，无展开/收起状态。
 
-// 缩略态下的点击只负责放大，不触发内部导航（避免点到缩小的菜单项）
-function onDockClick(e) {
-  if (sidebarOpen.value) return
-  e.stopPropagation()
-  e.preventDefault()
-  sidebarOpen.value = true
-}
-
-// 面板打开时，点击内容区任意位置收起
-function onMainClick() {
-  if (sidebarOpen.value) sidebarOpen.value = false
-}
-
-function onKey(e) {
-  if (e.key === 'Escape' && sidebarOpen.value) sidebarOpen.value = false
-}
-
-function onNav(key) {
-  navigate(key)
-  sidebarOpen.value = false
-}
 const showPasscode = ref(false)
 const showCMS = ref(false)
 
@@ -80,12 +53,10 @@ function computeScale() {
 onMounted(() => {
   computeScale()
   window.addEventListener('resize', computeScale)
-  window.addEventListener('keydown', onKey)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', computeScale)
-  window.removeEventListener('keydown', onKey)
 })
 
 // current page title (e.g. 项目经历) — shown centered in the top bar
@@ -117,25 +88,15 @@ function onPublish() {
   <div ref="stageEl" class="canvas-stage">
     <div
       class="canvas-root"
-      :class="[{ 'aside-open': sidebarOpen }, asideMode]"
       :style="{
         transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`
       }"
     >
-      <!-- 侧栏窗口：常态缩小成缩略图，点击后原位放大为完整面板 -->
-      <div
-        class="sidebar-dock"
-        :class="{ 'is-open': sidebarOpen }"
-        @click.capture="onDockClick"
-      >
-        <Sidebar :route="route" @navigate="onNav" />
-      </div>
+      <!-- 台前调度多窗口条：头像 + 5 个页面各一扇迷你窗口，点击即切换舞台 -->
+      <StageStrip :route="route" @navigate="navigate" />
 
-      <!-- 面板浮起时轻微压暗内容，聚焦前景（pointer-events:none，点击会穿透到内容区触发收起） -->
-      <div class="dim" :class="{ on: sidebarOpen }" />
-
-      <!-- Main area：点击内容区收起侧栏面板 -->
-      <div class="main-area" @click="onMainClick">
+      <!-- Main area -->
+      <div class="main-area">
         <TopBar
           :title="currentTitle"
           @open-cms="openCMS"
@@ -173,79 +134,18 @@ function onPublish() {
 <style scoped>
 .canvas-root { transition: transform 0.18s ease; }
 
-/* 台前调度缩略图 → 原位放大。transform-origin 定在左上角，
-   缩略图贴边、放大时向右下展开，和 mac 的窗口缩略图行为一致 */
-/* 竖向居中 + 左侧为轴的 3D 透视：缩略图呈梯形（远边收窄），和舞台管理的侧边缩略图一致 */
-.sidebar-dock {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  width: 280px;
-  /* 高度随侧栏内容收缩（而非拉满画布），缩略态比例更紧凑协调 */
-  height: fit-content;
-  max-height: calc(100% - 32px);
-  z-index: 45;
-  transform-origin: left center;
-  transform:
-    translateY(-50%)
-    perspective(700px)
-    rotateY(30deg)
-    scale(var(--thumb-scale, 0.34));
-  transition: transform 0.36s cubic-bezier(0.32, 0, 0, 1);
-  will-change: transform;
-  cursor: pointer;
-}
-.sidebar-dock:not(.is-open):hover {
-  transform:
-    translateY(-50%)
-    perspective(700px)
-    rotateY(26deg)
-    scale(0.38);
-}
-.sidebar-dock.is-open {
-  transform:
-    translateY(-50%)
-    perspective(820px)
-    rotateY(0deg)
-    scale(1);
-  cursor: default;
-}
-.canvas-root .main-area {
-  transform-origin: left center;
-  transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.34s cubic-bezier(0.32, 0, 0, 1),
-              opacity 0.24s ease;
-}
-.canvas-root.shrink.aside-open .main-area {
-  transform: translateX(208px) scale(0.82);
-}
-
-.dim {
-  position: absolute;
-  top: 16px;
-  left: 112px;
-  right: 16px;
-  bottom: 16px;
-  border-radius: var(--r-card);
-  background: rgba(13, 13, 26, 0.06);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.24s ease;
-  z-index: 20;
-}
-.dim.on { opacity: 1; }
-
+/* 窗口条贴左缘、竖向居中；单窗 132px + 聚焦态右移 8px，
+   主舞台 left: 160px 让出净空（视宽计算：16 + 132·cos22° + 8 ≈ 146） */
 .main-area {
   position: absolute;
   top: 16px;
-  left: 112px;
+  left: 160px;
   right: 16px;
   bottom: 16px;
   display: flex;
   flex-direction: column;
   padding: var(--pad-main);
   gap: 22px;
-  transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 
