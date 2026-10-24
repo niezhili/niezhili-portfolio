@@ -3,13 +3,17 @@ import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { siteData } from '../store/siteData.js'
 import featImg from '../assets/feat-smart-mirror.png'
 
+// 按含金量降序（播种已排，这里兜底旧存档）
+siteData.projects.sort((a, b) => (b.weight || 0) - (a.weight || 0))
 const projects = siteData.projects
 
 // 有实拍/渲染图的项目用图，其余用首字排版块占位
 const covers = { '智能镜 Smart Mirror': featImg }
 
 // ---------- 编辑目录：编号 + 大字级，展开后原位下推 ----------
-// 展开状态由滚动位置驱动：滚到谁，谁展开（点击 = 平滑滚到该条）
+// 交互 = 滚轮步进：一次滑动（一个手势）前进/后退一条，不依赖滚动位置反推。
+// 之前的「滚动位置判定线」两版都翻车：中线被展开正文挡住、贴底线又切换太碎；
+// 用户要的是确定性 —— 滑一下，走一条。
 const openIdx = ref(0)
 function pointLines(p) {
   return String(p.points || '').split('\n').map(s => s.trim()).filter(Boolean)
@@ -18,58 +22,11 @@ const pad = n => String(n).padStart(2, '0')
 
 const rootEl = ref(null)
 const scroller = ref(null)
-let lockUntil = 0
 
-// 判定线 = 视口底部上方 110px 的「预告带」：行的顶边进入该带即视为滚到它。
-// 为什么不用视口中线：展开条目的正文很长，会把后面的行一直压在中线以下，
-// 后面的行永远过不了线 —— 表现就是「只能滚到第二条」。贴底判定线没有这个问题：
-// 切换时上一条收起、下一条的头部正好落进阅读区。
-const LINE_FROM_BOTTOM = 110
-function currentIdx() {
-  const sc = scroller.value
-  const els = rowEls.filter(Boolean)
-  if (!sc || !els.length) return 0
-  const rect = sc.getBoundingClientRect()
-  // 内容不足一屏时保持当前条目（交给点击控制）；停在顶部时固定第一条
-  if (sc.scrollHeight - sc.clientHeight <= 8) return openIdx.value
-  if (sc.scrollTop <= 2) return 0
-  const line = rect.top + rect.height - LINE_FROM_BOTTOM
-  let idx = 0
-  for (let i = 0; i < rowEls.length; i++) {
-    const el = rowEls[i]
-    if (el && el.isConnected && el.getBoundingClientRect().top <= line) idx = i
-  }
-  if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 4) idx = els.length - 1
-  return idx
-}
-
-function syncOpen() {
-  if (performance.now() < lockUntil) return
-  const idx = currentIdx()
-  if (idx === openIdx.value) return
-  openIdx.value = idx
-  hovered.value = idx
-  lockUntil = performance.now() + 420
-}
-
-function onScroll() {
-  syncOpen()
-}
-
-// 点击：立即展开 + 把该条滚到判定线上方一点（内容不足一屏时只展开）
-function goTo(i) {
-  openIdx.value = i
-  hovered.value = i
-  lockUntil = performance.now() + 700
-  const sc = scroller.value
-  const el = rowEls[i]
-  if (!sc || !el || sc.scrollHeight - sc.clientHeight <= 8) return
-  const rect = sc.getBoundingClientRect()
-  // 把该条的行顶对齐到视口 30% 处：既在判定线以上（稳定保持展开），又留出上方上下文
-  const target = el.getBoundingClientRect().top - rect.top + sc.scrollTop - rect.height * 0.3
-  const max = sc.scrollHeight - sc.clientHeight
-  sc.scrollTo({ top: Math.max(0, Math.min(target, max)), behavior: 'smooth' })
-}
+// 行顶对齐锚点：展开条目落在视口 30% 处（上方留出上下文）
+const ANCHOR = 0.3
+// 一次手势的判定：距上一个滚轮事件超过该间隔即视为新手势；同一手势内只走一步
+const GESTURE_MS = 300
 
 // ---------- 右侧玻璃预览卡：sticky 吸附在滚动视口内，内容随当前行切换 ----------
 const hovered = ref(0)
@@ -77,6 +34,78 @@ const rowEls = []
 function setRow(el, i) { rowEls[i] = el || null }
 function onEnter(i) { hovered.value = i }
 function onLeave() { hovered.value = openIdx.value }
+
+let lastWheelAt = 0
+let selfScrolling = false
+let selfTimer = 0
+let idleTimer = 0
+
+function markSelfScroll() {
+  selfScrolling = true
+  clearTimeout(selfTimer)
+  selfTimer = setTimeout(() => { selfScrolling = false }, 800)
+}
+
+function scrollToRow(i) {
+  const sc = scroller.value
+  const el = rowEls[i]
+  if (!sc || !el || sc.scrollHeight - sc.clientHeight <= 8) return
+  const rect = sc.getBoundingClientRect()
+  const target = el.getBoundingClientRect().top - rect.top + sc.scrollTop - rect.height * ANCHOR
+  const max = sc.scrollHeight - sc.clientHeight
+  markSelfScroll()
+  sc.scrollTo({ top: Math.max(0, Math.min(target, max)), behavior: 'smooth' })
+}
+
+function stepTo(i) {
+  const idx = Math.max(0, Math.min(projects.length - 1, i))
+  if (idx === openIdx.value) return
+  openIdx.value = idx
+  hovered.value = idx
+  scrollToRow(idx)
+}
+
+// 滚轮：一个手势只走一步。手势内后续事件直接吞掉（含 preventDefault，阻止原生滚动）
+function onWheel(e) {
+  e.preventDefault()
+  const now = performance.now()
+  if (now - lastWheelAt < GESTURE_MS) {
+    lastWheelAt = now
+    return
+  }
+  lastWheelAt = now
+  if (e.deltaY > 0) stepTo(openIdx.value + 1)
+  else if (e.deltaY < 0) stepTo(openIdx.value - 1)
+}
+
+// 手动拖滚动条时（非程序化滚动）让展开行吸附到最近的一条，避免错位
+function onScroll() {
+  if (selfScrolling) return
+  clearTimeout(idleTimer)
+  idleTimer = setTimeout(() => {
+    if (selfScrolling) return
+    const sc = scroller.value
+    if (!sc) return
+    const rect = sc.getBoundingClientRect()
+    const line = rect.top + rect.height * ANCHOR
+    let best = openIdx.value
+    let bestD = Infinity
+    rowEls.forEach((el, i) => {
+      if (!el || !el.isConnected) return
+      const d = Math.abs(el.getBoundingClientRect().top - line)
+      if (d < bestD) { bestD = d; best = i }
+    })
+    if (best !== openIdx.value) {
+      openIdx.value = best
+      hovered.value = best
+    }
+  }, 280)
+}
+
+// 点击 = 直接跳到该条（不走步进）
+function goTo(i) {
+  stepTo(i)
+}
 
 const internCount = computed(() => projects.filter(p => /实习/.test(p.tag?.text || '')).length)
 const prodCount = computed(() => projects.filter(p => /自研产品/.test(p.tag?.text || '')).length)
@@ -94,27 +123,48 @@ const viewSrc = computed(() =>
 const canEmbed = computed(() => !!viewer.value && !isImg.value && /\.(pdf|html?)$/i.test(viewSrc.value))
 function openFile(a) { viewer.value = a }
 function closeViewer() { viewer.value = null }
-function onKey(e) { if (e.key === 'Escape') closeViewer() }
+
+function onKey(e) {
+  if (e.key === 'Escape') { closeViewer(); return }
+  if (viewer.value) return
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); stepTo(openIdx.value + 1) }
+  else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); stepTo(openIdx.value - 1) }
+  else if (e.key === 'Home') { e.preventDefault(); stepTo(0) }
+  else if (e.key === 'End') { e.preventDefault(); stepTo(projects.length - 1) }
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onKey)
   scroller.value = rootEl.value?.closest('.page-scroll') || null
+  // wheel 必须 non-passive 才能 preventDefault（接管滚动，改为步进）
+  scroller.value?.addEventListener('wheel', onWheel, { passive: false })
   scroller.value?.addEventListener('scroll', onScroll, { passive: true })
   nextTick(() => {
     hovered.value = openIdx.value
-    syncOpen()
-    // 开发调试：?sy=N 强制滚动位置，便于无头浏览器验证（生产构建忽略）
-    const sy = import.meta.env.DEV ? Number(new URLSearchParams(location.search).get('sy') || 0) : 0
-    if (sy && scroller.value) setTimeout(() => {
-      scroller.value.scrollTop = sy
-      // 无头浏览器对程序化滚动不派发 scroll 事件，这里人工补发（仅 DEV）
-      scroller.value.dispatchEvent(new Event('scroll'))
-    }, 350)
+    // 开发调试（仅 DEV）：?wheelsim=N 模拟 N 次滚轮手势，?sy=N 直接设定滚动位置
+    const q = new URLSearchParams(location.search)
+    const ws = import.meta.env.DEV ? Number(q.get('wheelsim') || 0) : 0
+    if (ws && scroller.value) {
+      let k = 0
+      const fire = () => {
+        scroller.value.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, cancelable: true, bubbles: true }))
+        // 同一手势内的第二个事件：不应再走一步
+        setTimeout(() => scroller.value && scroller.value.dispatchEvent(new WheelEvent('wheel', { deltaY: 80, cancelable: true, bubbles: true })), 50)
+        if (++k < ws) setTimeout(fire, 650)
+      }
+      setTimeout(fire, 350)
+    }
+    const sy = import.meta.env.DEV ? Number(q.get('sy') || 0) : 0
+    if (sy && scroller.value) setTimeout(() => { scroller.value.scrollTop = sy }, 350)
   })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKey)
+  scroller.value?.removeEventListener('wheel', onWheel)
   scroller.value?.removeEventListener('scroll', onScroll)
+  clearTimeout(selfTimer)
+  clearTimeout(idleTimer)
 })
 
 </script>
@@ -124,7 +174,7 @@ onBeforeUnmount(() => {
     <div class="list-col">
       <div class="head">
         <span class="eyebrow">PROJECTS · {{ pad(projects.length) }}</span>
-        <span class="hint">滚动即展开 · 按含金量排序</span>
+        <span class="hint">滚轮步进 · 一次滑动一条</span>
       </div>
 
       <div class="rows">

@@ -98,6 +98,7 @@ function seedContent() {
   for (const key of ['honors', 'competitions', 'projects']) {
     if (!Array.isArray(siteData[key])) { siteData[key] = clone(defaults[key]); continue }
     siteData[key] = carryAssets(siteData[key], defaults[key])
+    siteData[key].sort((a, b) => (b.weight || 0) - (a.weight || 0))
   }
 }
 
