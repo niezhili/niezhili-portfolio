@@ -15,9 +15,8 @@ export const navItems = [
   { key: 'home', label: '主页', dot: 'blue-5' },
   { key: 'edu',  label: '教育经历', dot: 'blue-4' },
   { key: 'proj', label: '项目经历', dot: 'blue-3' },
-  { key: 'prod', label: '自研产品', dot: 'blue-2' },
   { key: 'comp', label: '竞赛经历', dot: 'blue-1' },
-  { key: 'honor', label: '荣誉墙', dot: 'blue-4' }
+  { key: 'honor', label: '荣誉墙', dot: 'blue-1' }
 ]
 
 export const heroTags = ['智能镜负责人', '专利 4 项 · 软著 1 项', '国家级一等奖', 'IEEE 会议论文', '图软实习 · 驻场交付']
@@ -145,35 +144,32 @@ export const projects = [
     result: '32 站点勘察 1 天数字化交付 · 首批 7 站优先安装 · 施工分批推进中',
     weight: 84,
     attachments: []
-  }
-]
-
-// 自研产品 · 独立完成的个人产品（从需求、PRD、原型到代码全包）
-// 口径红线：不写用户数 / 下载量 / 营收；识别能力用现成方案的如实说，不包装成自研引擎
-export const products = [
+  },
   {
     title: '7点烧烤 · 语音点单记账 App',
     sub: '个人自研 · iOS + Android 双端 · 2026',
-    tag: { text: 'PRD v1.6', color: 'black' },
+    tag: { text: '自研产品', color: 'black' },
     period: '2026',
     role: '独立产品 · 需求 / 设计 / 开发全包',
     insight: '识别不是这个产品的差异化——摊主真正的痛点在「菜名能不能对上」和「错一单要不要吵架」，工程力全部投到业务层。',
     points: 'build vs buy：语音识别直接用系统键盘自带能力，不自研引擎；把工程力挪到菜名映射与兜底机制\n对钱的严谨：有未命中行时总额不计算、不可落单，必须人工处理完才出总价——宁可未命中，不许错认\n业务映射：别名词库（烤腰子 = 大腰子/腰子）+ 48 道菜 110 条语料测试，验证「语音文本 → 菜品」匹配层\n营业日口径 12:00–12:00：摊位跨零点营业，凌晨订单必须算进前一天，否则老板第二天对账会错\n砍需求保 MVP：删售罄标记、批量导入、挂账、作废功能，订单状态机收敛为 OPEN/PAID\nv1.6 删掉识别确认页，保存直落单、未命中行留在明细内处理，支撑「录入 < 20 秒」目标',
     result: 'PRD v1.0 → v1.6 十次修订 · 真实烧烤摊实测验证',
     outputs: ['PRD v1.6（含修订记录）', '16 张原型导出图', '菜品匹配语料测试报告', 'iOS / Android 双端代码'],
-    weight: 82
+    weight: 82,
+    attachments: []
   },
   {
     title: 'Lazy To Do · AI 捕捉式待办 App',
     sub: '个人自研 · Flutter + Kotlin · 已出 APK · 2026',
-    tag: { text: '已出 APK', color: 'black' },
+    tag: { text: '自研产品', color: 'black' },
     period: '2026',
     role: '独立产品 · 需求 / 设计 / 开发全包',
     insight: '建了待办也不看是提醒的失效，不是用户的错——强制力要「划不掉但不烦人」，靠存在感不靠轰炸。',
     points: '人机分工：AI 分类结果一律进「待确认队列」，人工确认才生效——AI 提效、人兜底\n核心差异化：强制提醒三级分级（L0 静默 / L1 普通通知 / L2 常驻不可划），完成是唯一出口，但无重弹、无全屏\n越用越准：用户每次改类型作为反馈回灌 AI，分类纠错随使用收敛\n方案评估：灵动岛评估后「不做」——Android 无公开 API，给出常驻通知 / 悬浮胶囊 / 焦点通知三级替代\n预期管理进文案：同步时效写进 UI（「录音内容最迟 25 分钟内出现」）',
     result: 'PRD v0.5 · 5 屏交互原型 · 可安装 APK',
     outputs: ['PRD v0.5（含数据模型与版本规划）', '5 屏交互原型', 'Flutter / Kotlin 双端代码', '可安装 APK'],
-    weight: 78
+    weight: 78,
+    attachments: []
   }
 ]
 
@@ -430,8 +426,7 @@ export const cmsNav = [
   { key: 'photos',   label: '照片库',   active: false, dot: 'blue-5' },
   { key: 'edu',      label: '教育经历', active: false, dot: 'blue-4' },
   { key: 'proj',     label: '项目经历', active: true,  dot: 'blue-3' },
-  { key: 'prod',     label: '自研产品', active: false, dot: 'blue-2' },
   { key: 'comp',     label: '竞赛经历', active: false, dot: 'blue-1' },
-  { key: 'honor',    label: '荣誉墙',   active: false, dot: 'blue-4' },
+  { key: 'honor',    label: '荣誉墙',   active: false, dot: 'blue-1' },
   { key: 'ai',       label: 'AI 设置',  active: false, dot: 'blue-5' }
 ]

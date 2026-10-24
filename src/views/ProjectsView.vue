@@ -74,8 +74,8 @@ function setRow(el, i) { if (el) rowEls[i] = el }
 function onEnter(i) { hovered.value = i }
 function onLeave() { hovered.value = openIdx.value }
 
-const doneCount = computed(() => projects.filter(p => !/进行中/.test(p.tag?.text || '')).length)
-const liveCount = computed(() => projects.length - doneCount.value)
+const internCount = computed(() => projects.filter(p => /实习/.test(p.tag?.text || '')).length)
+const prodCount = computed(() => projects.filter(p => /自研产品/.test(p.tag?.text || '')).length)
 
 const active = computed(() => projects[hovered.value] || projects[0] || null)
 const activeCover = computed(() => (active.value ? covers[active.value.title] : ''))
@@ -162,6 +162,13 @@ onBeforeUnmount(() => {
 
                 <div v-if="p.result" class="result">{{ p.result }}</div>
 
+                <div v-if="(p.outputs || []).length" class="block">
+                  <div class="block-label">产出物</div>
+                  <div class="files-row">
+                    <span v-for="o in p.outputs" :key="o" class="out-chip">{{ o }}</span>
+                  </div>
+                </div>
+
                 <div v-if="(p.attachments || []).length" class="block files">
                   <div class="block-label">原件</div>
                   <div class="files-row">
@@ -192,7 +199,7 @@ onBeforeUnmount(() => {
 
       <div class="foot">
         <span>共 {{ pad(projects.length) }} 个项目</span>
-        <span>已结题 {{ pad(doneCount) }} · 进行中 {{ pad(liveCount) }}</span>
+        <span>实习进行中 {{ pad(internCount) }} · 自研产品 {{ pad(prodCount) }}</span>
       </div>
     </div>
 
@@ -578,4 +585,14 @@ onBeforeUnmount(() => {
   color: var(--ink-3);
 }
 .no-preview p { margin: 0; }
+.out-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--ink-2);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(31, 31, 89, 0.1);
+  padding: 5px 12px;
+  border-radius: var(--r-chip);
+}
 </style>
