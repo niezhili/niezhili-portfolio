@@ -15,11 +15,12 @@ export const navItems = [
   { key: 'home', label: '主页', dot: 'blue-5' },
   { key: 'edu',  label: '教育经历', dot: 'blue-4' },
   { key: 'proj', label: '项目经历', dot: 'blue-3' },
-  { key: 'comp', label: '竞赛经历', dot: 'blue-2' },
-  { key: 'honor', label: '荣誉墙', dot: 'blue-1' }
+  { key: 'prod', label: '自研产品', dot: 'blue-2' },
+  { key: 'comp', label: '竞赛经历', dot: 'blue-1' },
+  { key: 'honor', label: '荣誉墙', dot: 'blue-4' }
 ]
 
-export const heroTags = ['智能镜负责人', '专利 4 项 · 软著 1 项', '国家级一等奖', 'IEEE 会议论文', '福安项目']
+export const heroTags = ['智能镜负责人', '专利 4 项 · 软著 1 项', '国家级一等奖', 'IEEE 会议论文', '图软实习 · 驻场交付']
 
 export const stats = [
   { num: '5+', label: '主导项目' },
@@ -44,10 +45,10 @@ export const sideProjects = [
     meta: '嵌入式 · 团队协作'
   },
   {
-    badge: '进行中',
-    title: '福安公交车队接入',
-    desc: '负责 200 辆公交设备与视频准入验证、调度中心对接。',
-    meta: '准入验证 · 进度管理'
+    badge: '驻场实习',
+    title: '公交智能化双项目',
+    desc: '福安智能调度系统 + 福鼎电子站牌，驻场负责进度与交付。',
+    meta: '进度管理 · 验收交付'
   }
 ]
 
@@ -68,7 +69,23 @@ export const education = {
       { tag: 'B1',    text: '英语学习 · 拉丁词根词积累与口语对话训练' },
       { tag: '方法论', text: '产品经理方法论 · 需求分析与项目管理实践' }
     ]
-  }
+  },
+  // 技能清单：熟练度自评口径来自本人确认，只列可验证的工具与场景
+  skills: [
+    { group: '项目管理', items: ['钉钉敏捷 Sprint', 'Jira / Confluence', '看板管理', '验收与周报文档'] },
+    { group: 'AI 辅助研发', items: ['Cursor', 'Windsurf', 'GitHub Copilot', 'Claude Code'] },
+    { group: '编程语言', items: ['Python', 'C / C++'] },
+    { group: '硬件与嵌入式', items: ['树莓派 Raspberry Pi', 'ESP32', '传感器 / 继电器调试'] },
+    { group: '知识管理', items: ['Obsidian', 'Notion', 'Markdown / LaTeX'] }
+  ],
+  // 组织与领导力经历
+  orgs: [
+    { role: '副社长', name: '「AI+创客」社团', desc: '管理 20+ 人团队，组织 10+ 场技术活动（分享会、黑客马拉松），建立 5+ 个知识库与标准化活动流程' },
+    { role: '宣传委员', name: '科创社', desc: '全权负责参赛作品展示材料撰写与排版，统筹物理实验项目开发节奏与技术对接分工' },
+    { role: '学员', name: '「蓝色空间」科技创新培养计划', desc: '学校科技创新人才培养计划学员' },
+    { role: '学员', name: '「名师工作室」', desc: '跟随导师参与科研项目与创新实践' },
+    { role: '学习委员', name: '班级', desc: '日常事务统筹与学术资料结构化整理' }
+  ]
 }
 
 // 项目经历 · 编辑目录条目
@@ -106,16 +123,57 @@ export const projects = [
     attachments: []
   },
   {
-    title: '福安公交车队项目',
-    sub: '在职项目 · 2026 · 200 辆设备实施规模',
-    tag: { text: '进行中', color: 'gray' },
-    period: '2026 · 进行中',
-    role: '设备准入与进度管理',
-    insight: '200 辆车靠人盯不住——先把准入标准落成清单，再用数据表跟踪，才能批量推进。',
-    points: '制定设备与视频准入清单，按车逐项核验\n对接调度中心完成联通，3 辆车 + 1 条线路跑通全流程\n用数据表跟踪全车队接入进度，及时暴露卡点',
-    result: '调度中心已联通 · 全车队接入推进中',
-    weight: 75,
+    title: '福安智能调度系统 · 交付',
+    sub: '实习 · 杭州图软科技 · 驻场进度负责人 · 2026.07–至今',
+    tag: { text: '驻场实习', color: 'black' },
+    period: '2026.07 – 至今',
+    role: '驻场项目进度负责人（实习）',
+    insight: '项目经理离场后交付不能停——进度卡住先穷尽自查，再沿权力链升级：同级催不动就向上，向上无效就借力拿合同的人。',
+    points: '协调公交公司、甲方中标公司、研发与实施共 5 方，用钉钉 AI 表格看板管理 Sprint 与周报，10+ 并行任务每日扫卡点\n车载视频连不上先自查两轮：通道数干扰与车位网络两个假设分别做控制变量实测，穷尽后上报总工定位白名单根因，沉淀排障文档\n白名单跨组织阻塞走三级升级：移动负责人 → 上一级催办 → 借力业主公交公司施压，配置很快落地\n200+ 台车载设备 IP 批量配置：先要全量车辆线路数据做路线规划，To-Do 逐台打勾、两人并行，配不了的跳过并记录后置处理\n初验前 2 周盘点发现文档缺齐，识别「文档依赖页面」的阻塞链，调整团队优先级、按验收日期倒排销项\n初验通过后主动重启节奏：文档收尾与业主新需求（登记 → 评估 → 排期）双线并行',
+    result: '调度中心联通 · 3 辆公交车 + 1 条线路全流程测试通过 · 初验通过',
+    weight: 90,
     attachments: []
+  },
+  {
+    title: '福鼎电子站牌更新 · 交付',
+    sub: '实习 · 杭州图软科技 · 项目前期负责人 · 2026.08–至今',
+    tag: { text: '驻场实习', color: 'black' },
+    period: '2026.08 – 至今',
+    role: '项目前期负责人（实习）',
+    insight: '接手的是被原供应商做砸的项目——先立问题基线再定交付节奏；拿一手数据定义问题，不坐在办公室猜。',
+    points: '梳理原供应商交付问题基线（设备报错率高、外观工艺与渲染图不符），输出问题清单作为整改依据\n与结构工程师分工完成 32 个站点勘察：针对竖排站名识别差、透视畸变做拍摄约束与方向纠正，用正确站点清单做 AI 记忆纠错\n1 天完成全部站点信息数字化，开发同学据此快速录入\n据此制定分阶段交付排期：首批 7 个站点优先安装，施工分批推进、每日核对完成量\n管理与施工方协作的同时亲手调试设备，把验收标准落在实测过的细节上',
+    result: '32 站点勘察 1 天数字化交付 · 首批 7 站优先安装 · 施工分批推进中',
+    weight: 84,
+    attachments: []
+  }
+]
+
+// 自研产品 · 独立完成的个人产品（从需求、PRD、原型到代码全包）
+// 口径红线：不写用户数 / 下载量 / 营收；识别能力用现成方案的如实说，不包装成自研引擎
+export const products = [
+  {
+    title: '7点烧烤 · 语音点单记账 App',
+    sub: '个人自研 · iOS + Android 双端 · 2026',
+    tag: { text: 'PRD v1.6', color: 'black' },
+    period: '2026',
+    role: '独立产品 · 需求 / 设计 / 开发全包',
+    insight: '识别不是这个产品的差异化——摊主真正的痛点在「菜名能不能对上」和「错一单要不要吵架」，工程力全部投到业务层。',
+    points: 'build vs buy：语音识别直接用系统键盘自带能力，不自研引擎；把工程力挪到菜名映射与兜底机制\n对钱的严谨：有未命中行时总额不计算、不可落单，必须人工处理完才出总价——宁可未命中，不许错认\n业务映射：别名词库（烤腰子 = 大腰子/腰子）+ 48 道菜 110 条语料测试，验证「语音文本 → 菜品」匹配层\n营业日口径 12:00–12:00：摊位跨零点营业，凌晨订单必须算进前一天，否则老板第二天对账会错\n砍需求保 MVP：删售罄标记、批量导入、挂账、作废功能，订单状态机收敛为 OPEN/PAID\nv1.6 删掉识别确认页，保存直落单、未命中行留在明细内处理，支撑「录入 < 20 秒」目标',
+    result: 'PRD v1.0 → v1.6 十次修订 · 真实烧烤摊实测验证',
+    outputs: ['PRD v1.6（含修订记录）', '16 张原型导出图', '菜品匹配语料测试报告', 'iOS / Android 双端代码'],
+    weight: 82
+  },
+  {
+    title: 'Lazy To Do · AI 捕捉式待办 App',
+    sub: '个人自研 · Flutter + Kotlin · 已出 APK · 2026',
+    tag: { text: '已出 APK', color: 'black' },
+    period: '2026',
+    role: '独立产品 · 需求 / 设计 / 开发全包',
+    insight: '建了待办也不看是提醒的失效，不是用户的错——强制力要「划不掉但不烦人」，靠存在感不靠轰炸。',
+    points: '人机分工：AI 分类结果一律进「待确认队列」，人工确认才生效——AI 提效、人兜底\n核心差异化：强制提醒三级分级（L0 静默 / L1 普通通知 / L2 常驻不可划），完成是唯一出口，但无重弹、无全屏\n越用越准：用户每次改类型作为反馈回灌 AI，分类纠错随使用收敛\n方案评估：灵动岛评估后「不做」——Android 无公开 API，给出常驻通知 / 悬浮胶囊 / 焦点通知三级替代\n预期管理进文案：同步时效写进 UI（「录音内容最迟 25 分钟内出现」）',
+    result: 'PRD v0.5 · 5 屏交互原型 · 可安装 APK',
+    outputs: ['PRD v0.5（含数据模型与版本规划）', '5 屏交互原型', 'Flutter / Kotlin 双端代码', '可安装 APK'],
+    weight: 78
   }
 ]
 
@@ -178,7 +236,7 @@ export const competitions = [
     title: '中美青年创客大赛',
     sub: '团队作品 · 校级一等奖',
     tag: { text: '校级一等奖', color: 'gray' },
-    period: '2026',
+    period: '2025',
     role: '创意方案与原型制作',
     points: '参与创客主题方案构思与打磨\n完成参赛作品原型制作与路演展示',
     result: '中美青年创客大赛校级一等奖',
@@ -200,11 +258,33 @@ export const competitions = [
     title: '中美青年创客大赛 · 杭州分赛区',
     sub: '团队作品 · 优胜奖',
     tag: { text: '分赛区优胜', color: 'gray' },
-    period: '2026',
+    period: '2025',
     role: '作品展示与评委问答',
     points: '携校级一等奖作品晋级杭州分赛区\n完成作品展示与评委问答环节',
     result: '中美青年创客大赛杭州分赛区优胜奖',
     weight: 62,
+    attachments: []
+  },
+  {
+    title: '中国大学生计算机设计大赛 · 校赛',
+    sub: '个人作品 · 树莓派智能书法镜',
+    tag: { text: '校级二等奖', color: 'gray' },
+    period: '2025',
+    role: '作品设计与开发',
+    points: '以《"以镜鉴字"——基于树莓派的智能书法镜》参加浙江科技大学校赛\n校赛获奖后进入浙江省级赛',
+    result: '浙江科技大学校赛二等奖',
+    weight: 48,
+    attachments: []
+  },
+  {
+    title: '物理实验与科技创新校内选拔赛',
+    sub: '个人作品 · 基于大模型的多语言智镜',
+    tag: { text: '校级三等奖', color: 'gray' },
+    period: '2025',
+    role: '作品设计与开发',
+    points: '以《基于大模型的多语言智镜》参加校内选拔赛',
+    result: '浙江科技大学物理实验与科技创新校内选拔赛三等奖',
+    weight: 46,
     attachments: []
   },
   {
@@ -350,7 +430,8 @@ export const cmsNav = [
   { key: 'photos',   label: '照片库',   active: false, dot: 'blue-5' },
   { key: 'edu',      label: '教育经历', active: false, dot: 'blue-4' },
   { key: 'proj',     label: '项目经历', active: true,  dot: 'blue-3' },
-  { key: 'comp',     label: '竞赛经历', active: false, dot: 'blue-2' },
-  { key: 'honor',    label: '荣誉墙',   active: false, dot: 'blue-1' },
+  { key: 'prod',     label: '自研产品', active: false, dot: 'blue-2' },
+  { key: 'comp',     label: '竞赛经历', active: false, dot: 'blue-1' },
+  { key: 'honor',    label: '荣誉墙',   active: false, dot: 'blue-4' },
   { key: 'ai',       label: 'AI 设置',  active: false, dot: 'blue-5' }
 ]

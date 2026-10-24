@@ -33,6 +33,35 @@ const education = siteData.education
         </li>
       </ul>
     </section>
+
+    <section v-if="(education.skills || []).length" class="skills glass">
+      <div class="card-head">
+        <h2 class="sec-title">技能清单</h2>
+        <span class="status">SKILLS</span>
+      </div>
+      <div v-for="g in education.skills" :key="g.group" class="skill-group">
+        <span class="skill-name">{{ g.group }}</span>
+        <div class="chips">
+          <span v-for="s in g.items" :key="s" class="chip">{{ s }}</span>
+        </div>
+      </div>
+    </section>
+
+    <section v-if="(education.orgs || []).length" class="orgs glass">
+      <div class="card-head">
+        <h2 class="sec-title">组织与领导力</h2>
+        <span class="status">LEADERSHIP</span>
+      </div>
+      <ul class="org-rows">
+        <li v-for="o in education.orgs" :key="o.name" class="org-row">
+          <span class="org-role">{{ o.role }}</span>
+          <span class="org-main">
+            <span class="org-name">{{ o.name }}</span>
+            <span class="org-desc">{{ o.desc }}</span>
+          </span>
+        </li>
+      </ul>
+    </section>
   </div>
 </template>
 
@@ -78,5 +107,49 @@ const education = siteData.education
 .row-tag.tone-0 { background: var(--accent-gray); }
 .row-tag.tone-1 { background: var(--blue-500); }
 .row-tag.tone-2 { background: var(--accent-black); }
+.row-tag.tone-3 { background: var(--accent-gray); }
 .row-text { font-size: 13px; color: var(--ink-2); }
+
+.skill-group {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 9px 0;
+}
+.skill-group + .skill-group { border-top: 1px solid rgba(31, 31, 89, 0.08); }
+.skill-name {
+  flex: none;
+  width: 88px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-1);
+}
+.chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.chip {
+  font-size: 11.5px;
+  color: var(--ink-2);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(31, 31, 89, 0.1);
+  padding: 4px 11px;
+  border-radius: var(--r-chip);
+}
+
+.org-rows { list-style: none; margin: 10px 0 0; padding: 0; }
+.org-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 9px 0;
+}
+.org-row + .org-row { border-top: 1px solid rgba(31, 31, 89, 0.08); }
+.org-role {
+  flex: none;
+  width: 64px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue-600);
+}
+.org-main { display: flex; flex-direction: column; gap: 2px; }
+.org-name { font-size: 13px; font-weight: 600; color: var(--ink-1); }
+.org-desc { font-size: 12px; color: var(--ink-3); line-height: 1.5; }
 </style>

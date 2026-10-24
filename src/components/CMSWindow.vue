@@ -73,6 +73,24 @@ const sections = {
       ]}
     ]
   },
+  prod: {
+    label: '自研产品',
+    groups: [
+      { title: '产品列表', path: 'products', fields: [
+        { key: 'title', label: '名称' },
+        { key: 'sub', label: '副标题' },
+        { key: 'insight', label: '产品判断（一句话）', type: 'textarea' },
+        { key: 'tag.text', label: '角标文字' },
+        { key: 'tag.color', label: '角标配色（red/black/gray）' },
+        { key: 'period', label: '时间' },
+        { key: 'role', label: '我的角色' },
+        { key: 'points', label: '关键决策（每行一条）', type: 'textarea' },
+        { key: 'outputs', label: '产出物（逗号分隔）', type: 'csv' },
+        { key: 'result', label: '成果行' },
+        { key: 'weight', label: '排序分值（0-100，越大越靠前）' }
+      ]}
+    ]
+  },
   comp: {
     label: '竞赛经历',
     groups: [

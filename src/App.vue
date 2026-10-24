@@ -9,6 +9,7 @@ import { isSessionUnlocked, markSessionUnlocked } from './lib/biometric.js'
 import HomeView from './views/HomeView.vue'
 import EducationView from './views/EducationView.vue'
 import ProjectsView from './views/ProjectsView.vue'
+import ProductsView from './views/ProductsView.vue'
 import CompetitionsView from './views/CompetitionsView.vue'
 import HonorsView from './views/HonorsView.vue'
 
@@ -147,6 +148,7 @@ function onPublish() {
           <HomeView         v-if="route === 'home'"   @open-cms="openCMS" />
           <EducationView    v-else-if="route === 'edu'" />
           <ProjectsView     v-else-if="route === 'proj'" />
+          <ProductsView     v-else-if="route === 'prod'" />
           <CompetitionsView v-else-if="route === 'comp'" />
           <HonorsView       v-else-if="route === 'honor'" />
         </div>
