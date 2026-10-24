@@ -177,22 +177,37 @@ function onPublish() {
 
 /* 台前调度缩略图 → 原位放大。transform-origin 定在左上角，
    缩略图贴边、放大时向右下展开，和 mac 的窗口缩略图行为一致 */
+/* 竖向居中 + 左侧为轴的 3D 透视：缩略图呈梯形（远边收窄），和舞台管理的侧边缩略图一致 */
 .sidebar-dock {
   position: absolute;
-  top: 16px;
   left: 16px;
-  bottom: 16px;
+  top: 50%;
   width: 280px;
+  height: calc(100% - 32px);
   z-index: 45;
-  transform: scale(var(--thumb-scale, 0.32));
-  transform-origin: left top;
-  transition: transform 0.34s cubic-bezier(0.32, 0, 0, 1);
+  transform-origin: left center;
+  transform:
+    translateY(-50%)
+    perspective(700px)
+    rotateY(30deg)
+    scale(var(--thumb-scale, 0.34));
+  transition: transform 0.36s cubic-bezier(0.32, 0, 0, 1);
   will-change: transform;
   cursor: pointer;
 }
-.sidebar-dock:not(.is-open):hover { transform: scale(0.345); }
+.sidebar-dock:not(.is-open):hover {
+  transform:
+    translateY(-50%)
+    perspective(700px)
+    rotateY(26deg)
+    scale(0.38);
+}
 .sidebar-dock.is-open {
-  transform: scale(1);
+  transform:
+    translateY(-50%)
+    perspective(820px)
+    rotateY(0deg)
+    scale(1);
   cursor: default;
 }
 .canvas-root .main-area {
