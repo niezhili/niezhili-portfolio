@@ -63,62 +63,51 @@ export const siteData = reactive({
   lastPublishedAt: (saved && saved.lastPublishedAt) || defaults.lastPublishedAt
 })
 
-// 旧存档迁移：竞赛/项目条目按标题合并默认值，补齐新增字段（period/role/points/result/weight/attachments）
-for (const key of ['competitions', 'projects']) {
-  if (Array.isArray(siteData[key])) {
-    const defs = defaults[key]
-    siteData[key] = siteData[key].map(s => {
-      const def = defs.find(d => d.title === s.title)
-      if (!def) return { attachments: [], weight: 50, ...s }
-      const merged = { ...clone(def), ...s }
-      // 过程材料补齐：存档里还没有材料时用默认值填充，已有上传则不覆盖
-      if ((!Array.isArray(s.attachments) || s.attachments.length === 0) && def.attachments?.length) {
-        merged.attachments = clone(def.attachments)
-      }
-      return merged
-    })
-  }
-}
-
 // ---------- 内容版本化播种 ----------
-// content.js 新增条目（论文 / 软著 / 语言证书等）后，浏览器里的旧存档不会自动带上。
-// 这里按版本号做一次增量合并：只追加缺失条目、刷新统计与简介文本，
-// 用户自己在 CMS 里改过的头像、照片库、条目详情一律保留。标记写入后不再重复播种。
-const SEED_REV = '2026-10-24-products-merge'
+// content.js 是条目文本的唯一权威。播种时按标题对齐：文本一律以 defaults 为准，
+// 只保留用户生成的资产（过程材料 attachments、荣誉图片 image）；存档里对不上号的
+// 旧标题条目（历史残留）直接清除。标记 = 版本号 + 条目标题指纹，改内容即自动重播，
+// 不再依赖手动升版本号（此前版本号被旧标签页抢先写过，导致播种被跳过、旧文案复活）。
+const SEED_REV = '2026-10-24-canonical'
 const SEED_KEY = 'portfolio-cms-seed-rev'
 
+// 用户可能改过条目标题再改回来：资产按「标题 + 序号兜底」回挂
+function carryAssets(savedList, defList) {
+  return defList.map((def, i) => {
+    const hit = savedList.find(x => x && x.title === def.title) || savedList[i]
+    const keep = {}
+    if (hit) {
+      const files = Array.isArray(hit.attachments) ? hit.attachments : []
+      if (files.length) keep.attachments = files
+      if (def.image !== undefined && hit.image) keep.image = hit.image
+    }
+    if (!keep.attachments) keep.attachments = clone(def.attachments || [])
+    return { ...clone(def), ...keep }
+  })
+}
+
 function seedContent() {
-  // 1) 统计数字与简介类文本整体刷新为新默认值
+  // 简介与统计类文本整体刷新
   siteData.stats = clone(defaults.stats)
   siteData.competitionStats = clone(defaults.competitionStats)
   siteData.education = clone(defaults.education)
   siteData.featured = clone(defaults.featured)
+  siteData.sideProjects = clone(defaults.sideProjects)
   siteData.hero = { ...siteData.hero, tags: clone(defaults.hero.tags) }
-  // 2) 三类列表追加缺失条目 → 文案字段以 content.js 为准 → 按含金量降序重排
-  //    用户上传的材料与荣誉图片一律保留，不被默认值覆盖
+  // 三类列表：以 defaults 为基准重建，只回挂用户资产
   for (const key of ['honors', 'competitions', 'projects']) {
-    if (!Array.isArray(siteData[key])) continue
-    for (const def of defaults[key]) {
-      if (!siteData[key].some(x => x && x.title === def.title)) siteData[key].push(clone(def))
-    }
-    siteData[key] = siteData[key].map(x => {
-      const def = defaults[key].find(d => d.title === x.title)
-      if (!def) return x
-      const keep = {}
-      const files = Array.isArray(x.attachments) ? x.attachments : []
-      keep.attachments = files.length ? files : clone(def.attachments || [])
-      if (key === 'honors' && x.image) keep.image = x.image
-      return { ...clone(def), ...keep }
-    })
-    siteData[key].sort((a, b) => (b.weight || 0) - (a.weight || 0))
+    if (!Array.isArray(siteData[key])) { siteData[key] = clone(defaults[key]); continue }
+    siteData[key] = carryAssets(siteData[key], defaults[key])
   }
 }
 
+const seedSig = SEED_REV + '|' + ['honors', 'competitions', 'projects']
+  .map(k => defaults[k].map(x => x.title).join('¶')).join('|')
 let seeded = false
-try { seeded = localStorage.getItem(SEED_KEY) === SEED_REV } catch (e) { seeded = true }
+try { seeded = localStorage.getItem(SEED_KEY) === seedSig } catch (e) { seeded = true }
 if (!seeded) {
   seedContent()
-  try { localStorage.setItem(SEED_KEY, SEED_REV) } catch (e) { /* ignore */ }
+  try { localStorage.setItem(SEED_KEY, seedSig) } catch (e) { /* ignore */ }
 }
 
 // Debounced auto-save on any change
