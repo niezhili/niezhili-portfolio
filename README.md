@@ -21,7 +21,7 @@ npm run build    # production build into dist/
 ## Canvas behavior
 
 - Fixed `1280 × 800` canvas, auto-scaled to fit the browser window with `transform: scale()` (capped at 1.0 — never scales up).
-- Sidebar collapses to a `76px` icon rail; toggle from the sidebar bottom pill or the top bar's 展开侧栏 pill.
+- Sidebar behaves like macOS Stage Manager: it rests as a 32% window thumbnail hugging the left edge, and scales up in place on hover (120ms in / 380ms out). No manual collapse state.
 - Top bar's `内容管理` blue pill opens the passcode modal; passcode `051014` auto-verifies on the 6th digit; `发布更新` returns to home.
 - **Data persistence**: all CMS edits are saved to `localStorage` (key `portfolio-cms-data-v4`); `SEED_REV` in `siteData.js` 控制一次性的增量播种（新增条目合并进旧存档，不覆盖用户上传的材料） and survive refresh; every view reads live from the store; `发布更新` stamps the `最近更新` date in the top bar; 恢复默认 resets to the `content.js` defaults.
 
@@ -34,8 +34,7 @@ src/
   data/content.js             # 全站文案数据的唯一来源（默认值）
   store/siteData.js           # 响应式数据仓库 + localStorage 持久化（v4）+ SEED_REV 增量播种
   components/
-    Sidebar.vue               # 展开侧栏（280px）：头像、导航、联系方式、收起按钮
-    IconRail.vue              # 收起图标栏（76px）：圆点导航
+    Sidebar.vue               # 侧栏窗口（280px）：头像、导航、联系方式；常态缩为 32% 的窗口缩略图
     TopBar.vue                # 顶栏：最近更新时间、内容管理入口、展开侧栏药丸（收起态）
     PasscodeModal.vue         # 密码锁屏（420px）：6 位密码自动校验
     CMSWindow.vue             # 内容管理后台（1100×680）：schema 驱动编辑器 + 实时预览

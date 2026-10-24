@@ -2,7 +2,6 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { navItems } from './data/content.js'
 import Sidebar from './components/Sidebar.vue'
-import IconRail from './components/IconRail.vue'
 import TopBar from './components/TopBar.vue'
 import PasscodeModal from './components/PasscodeModal.vue'
 import CMSWindow from './components/CMSWindow.vue'
@@ -45,6 +44,14 @@ function leaveAside() {
   clearTimeout(closeTimer)
   closeTimer = setTimeout(() => { sidebarOpen.value = false }, 420)
 }
+// 缩略态下的点击只负责放大，不触发内部导航（避免快速点击点到缩小的菜单项）
+function onDockClick(e) {
+  if (sidebarOpen.value) return
+  e.stopPropagation()
+  e.preventDefault()
+  sidebarOpen.value = true
+}
+
 function onNav(key) {
   navigate(key)
   clearTimeout(closeTimer)
@@ -115,27 +122,16 @@ function onPublish() {
         transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`
       }"
     >
-      <!-- 贴边缩略条（常驻）+ hover 触达区 -->
+      <!-- 侧栏窗口：常态缩小成缩略图，hover 原位放大为完整面板 -->
       <div
-        class="rail-zone"
-        :class="{ 'rail-hidden': sidebarOpen }"
+        class="sidebar-dock"
+        :class="{ 'is-open': sidebarOpen }"
         @mouseenter="enterAside"
         @mouseleave="leaveAside"
+        @click.capture="onDockClick"
       >
-        <IconRail :route="route" @navigate="onNav" />
+        <Sidebar :route="route" @navigate="onNav" />
       </div>
-
-      <!-- 浮起的完整面板：覆盖在内容之上，不改变主区域宽度 -->
-      <Transition name="panel">
-        <div
-          v-if="sidebarOpen"
-          class="panel-wrap"
-          @mouseenter="enterAside"
-          @mouseleave="leaveAside"
-        >
-          <Sidebar :route="route" @navigate="onNav" />
-        </div>
-      </Transition>
 
       <!-- 面板浮起时轻微压暗内容，聚焦前景 -->
       <div class="dim" :class="{ on: sidebarOpen }" />
@@ -179,24 +175,25 @@ function onPublish() {
 <style scoped>
 .canvas-root { transition: transform 0.18s ease; }
 
-.rail-zone {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 88px;
-  z-index: 40;
-  transition: opacity 0.16s ease;
-}
-.rail-zone.rail-hidden { opacity: 0; }
-
-.panel-wrap {
+/* 台前调度缩略图 → 原位放大。transform-origin 定在左上角，
+   缩略图贴边、放大时向右下展开，和 mac 的窗口缩略图行为一致 */
+.sidebar-dock {
   position: absolute;
   top: 16px;
   left: 16px;
   bottom: 16px;
   width: 280px;
   z-index: 45;
+  transform: scale(var(--thumb-scale, 0.32));
+  transform-origin: left top;
+  transition: transform 0.34s cubic-bezier(0.32, 0, 0, 1);
+  will-change: transform;
+  cursor: pointer;
+}
+.sidebar-dock:not(.is-open):hover { transform: scale(0.345); }
+.sidebar-dock.is-open {
+  transform: scale(1);
+  cursor: default;
 }
 .canvas-root .main-area {
   transform-origin: left center;
@@ -208,18 +205,10 @@ function onPublish() {
   transform: translateX(208px) scale(0.82);
 }
 
-.panel-enter-active, .panel-leave-active {
-  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.32, 0, 0, 1);
-}
-.panel-enter-from, .panel-leave-to {
-  opacity: 0;
-  transform: translateX(-14px) scale(0.97);
-}
-
 .dim {
   position: absolute;
   top: 16px;
-  left: 96px;
+  left: 112px;
   right: 16px;
   bottom: 16px;
   border-radius: var(--r-card);
@@ -234,7 +223,7 @@ function onPublish() {
 .main-area {
   position: absolute;
   top: 16px;
-  left: 96px;
+  left: 112px;
   right: 16px;
   bottom: 16px;
   display: flex;
