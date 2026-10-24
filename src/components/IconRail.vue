@@ -7,8 +7,12 @@ const emit = defineEmits(['navigate'])
 </script>
 
 <template>
-  <aside class="icon-rail glass">
-    <div class="avatar-sm"><img :src="siteData.avatar" alt="个人头像" /></div>
+  <aside class="rail" aria-label="主导航">
+    <button class="avatar-sm" type="button" aria-label="回到主页" @click="emit('navigate', 'home')">
+      <img :src="siteData.avatar" alt="个人头像" />
+    </button>
+
+    <span class="rule" />
 
     <nav class="rail-nav">
       <button
@@ -16,68 +20,79 @@ const emit = defineEmits(['navigate'])
         :key="item.key"
         class="rail-item"
         :class="{ active: route === item.key }"
+        :aria-label="item.label"
         :title="item.label"
         @click="emit('navigate', item.key)"
       >
         <span class="nav-dot" :class="item.dot" />
       </button>
     </nav>
+
+    <span class="rule bottom" />
   </aside>
 </template>
 
 <style scoped>
-.icon-rail {
+/* 台前调度式缩略条：没有面板、没有描边，直接落在背景上 */
+.rail {
   position: absolute;
   top: 16px;
   left: 16px;
   bottom: 16px;
-  width: 76px;
-  padding: 24px 16px;
+  width: 56px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
   align-items: center;
-  animation: slideIn 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 12px;
+  pointer-events: none;
 }
-@keyframes slideIn { from { opacity: 0; } to { opacity: 1; } }
+.rail > * { pointer-events: auto; }
 
 .avatar-sm {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: none;
   border-radius: var(--r-dot);
   background: #fff;
-  box-shadow: 0 4px 10px rgba(31, 31, 89, 0.18);
+  box-shadow: 0 4px 12px rgba(31, 31, 89, 0.18);
   overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
-.avatar-sm img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
+.avatar-sm:hover { transform: scale(1.08); }
+.avatar-sm img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.rail-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-top: 8px;
+.rule {
+  width: 12px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.6);
 }
+.rule.bottom { margin-top: auto; }
+
+.rail-nav { display: flex; flex-direction: column; gap: 8px; }
 
 .rail-item {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   border: none;
   background: transparent;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s ease;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
-.rail-item:hover { background: rgba(255, 255, 255, 0.5); }
-.rail-item.active { background: #fff; box-shadow: 0 4px 10px rgba(31, 31, 89, 0.1); }
+.rail-item:hover { background: rgba(255, 255, 255, 0.42); transform: scale(1.04); }
+.rail-item.active {
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(31, 31, 89, 0.14);
+}
+.rail-item .nav-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  box-shadow: none;
+}
 </style>

@@ -1,28 +1,15 @@
 <script setup>
 import { siteData } from '../store/siteData.js'
 
-defineProps({
-  collapsed: Boolean,
-  title: String
-})
-const emit = defineEmits(['toggle-sidebar', 'open-cms'])
+defineProps({ title: String })
+const emit = defineEmits(['open-cms'])
 </script>
 
 <template>
   <header class="topbar">
+    <!-- 侧栏常驻为贴边缩略条，页面标题居中作为上下文提示 -->
     <div class="left">
-      <!-- Toggle pill always lives in this slot (same position in both states) -->
-      <button class="pill-toggle" @click="emit('toggle-sidebar')">
-        <span class="chev">{{ collapsed ? '›' : '‹' }}</span>
-        {{ collapsed ? '展开侧栏' : '收起侧栏' }}
-      </button>
-    </div>
-
-    <!-- Collapsed: current page title, centered in the top bar.
-         The sidebar only shows icons when collapsed, so the title
-         restores page context without duplicating any label. -->
-    <div v-if="collapsed" class="page-title">
-      <span class="dot" /> {{ title }}
+      <div class="page-title"><span class="dot" />{{ title }}</div>
     </div>
 
     <div class="right">
@@ -77,21 +64,4 @@ const emit = defineEmits(['toggle-sidebar', 'open-cms'])
   font-weight: 500;
 }
 
-.pill-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--glass-stroke);
-  border-radius: var(--r-pill);
-  background: #fff;
-  color: var(--ink-2);
-  font-size: 12px;
-  font-weight: 600;
-  box-shadow: 0 2px 6px rgba(31, 31, 89, 0.08);
-}
-.pill-toggle .chev { font-size: 16px; color: var(--blue-500); font-weight: 700; }
-.pill-toggle:hover { background: var(--blue-500); color: #fff; }
-.pill-toggle:hover .chev { color: #fff; }
 </style>

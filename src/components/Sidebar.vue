@@ -71,22 +71,20 @@ const showAvatarZoom = ref(false)
 
 <style scoped>
 .sidebar {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  bottom: 16px;
-  width: 280px;
+  position: relative;
+  width: 100%;
+  height: 100%;
   padding: var(--pad-sidebar-y) var(--pad-sidebar-x);
   border-right: none;
   display: flex;
   flex-direction: column;
   gap: var(--gap-sidebar);
-  animation: slideIn 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes slideIn {
-  from { transform: translateX(-12px); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+  /* 浮层盖在内容之上，玻璃要比常态更实，否则文字会与背后内容互相干扰 */
+  background: rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(30px) saturate(165%);
+  -webkit-backdrop-filter: blur(30px) saturate(165%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 32px 70px rgba(31, 31, 89, 0.26);
 }
 
 .brand { display: flex; flex-direction: column; align-items: center; gap: 14px; }

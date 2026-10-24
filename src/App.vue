@@ -23,7 +23,33 @@ function initialRoute() {
 }
 
 const route = ref(initialRoute())
-const sidebarCollapsed = ref(false)
+
+// 台前调度式侧栏：常态只留 56px 缩略条，鼠标进入左侧地带才浮起完整面板。
+// 面板是浮层（absolute + 更高 z-index），主区域宽度不变，页面不重排、不跳滚动位置。
+// 开发环境可用 ?sb=1 直接打开面板（截图/联调用），生产构建忽略该参数
+const __sbParam = new URLSearchParams(location.search).get('sb')
+const sidebarOpen = ref(import.meta.env.DEV && !!__sbParam)
+// 面板浮起时内容的表现：overlay = 原样被覆盖；shrink = 整体后退缩小（更像台前调度）
+const asideMode = ref(__sbParam === 'push' ? 'shrink' : 'overlay')
+let openTimer = null
+let closeTimer = null
+
+function enterAside() {
+  clearTimeout(closeTimer)
+  if (sidebarOpen.value) return
+  clearTimeout(openTimer)
+  openTimer = setTimeout(() => { sidebarOpen.value = true }, 180)
+}
+function leaveAside() {
+  clearTimeout(openTimer)
+  clearTimeout(closeTimer)
+  closeTimer = setTimeout(() => { sidebarOpen.value = false }, 420)
+}
+function onNav(key) {
+  navigate(key)
+  clearTimeout(closeTimer)
+  sidebarOpen.value = false
+}
 const showPasscode = ref(false)
 const showCMS = ref(false)
 
@@ -56,11 +82,9 @@ onMounted(() => {
 onBeforeUnmount(() => window.removeEventListener('resize', computeScale))
 
 // current page title (e.g. 项目经历) — shown centered in the top bar
-// as the expand button when the sidebar is collapsed
 const currentTitle = computed(() => navItems.find(n => n.key === route.value)?.label || '')
 
 function navigate(key) { route.value = key }
-function toggleSidebar() { sidebarCollapsed.value = !sidebarCollapsed.value }
 function openCMS() {
   // 本次会话已验证过 → 直接进入，不再要求指纹/密码
   if (isSessionUnlocked()) {
@@ -86,30 +110,40 @@ function onPublish() {
   <div ref="stageEl" class="canvas-stage">
     <div
       class="canvas-root"
+      :class="[{ 'aside-open': sidebarOpen }, asideMode]"
       :style="{
         transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`
       }"
     >
-      <!-- Sidebar (expanded) -->
-      <Sidebar
-        v-if="!sidebarCollapsed"
-        :route="route"
-        @navigate="navigate"
-      />
+      <!-- 贴边缩略条（常驻）+ hover 触达区 -->
+      <div
+        class="rail-zone"
+        :class="{ 'rail-hidden': sidebarOpen }"
+        @mouseenter="enterAside"
+        @mouseleave="leaveAside"
+      >
+        <IconRail :route="route" @navigate="onNav" />
+      </div>
 
-      <!-- Icon rail (collapsed) -->
-      <IconRail
-        v-else
-        :route="route"
-        @navigate="navigate"
-      />
+      <!-- 浮起的完整面板：覆盖在内容之上，不改变主区域宽度 -->
+      <Transition name="panel">
+        <div
+          v-if="sidebarOpen"
+          class="panel-wrap"
+          @mouseenter="enterAside"
+          @mouseleave="leaveAside"
+        >
+          <Sidebar :route="route" @navigate="onNav" />
+        </div>
+      </Transition>
+
+      <!-- 面板浮起时轻微压暗内容，聚焦前景 -->
+      <div class="dim" :class="{ on: sidebarOpen }" />
 
       <!-- Main area -->
       <div class="main-area">
         <TopBar
-          :collapsed="sidebarCollapsed"
           :title="currentTitle"
-          @toggle-sidebar="toggleSidebar"
           @open-cms="openCMS"
         />
 
@@ -145,10 +179,62 @@ function onPublish() {
 <style scoped>
 .canvas-root { transition: transform 0.18s ease; }
 
+.rail-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 88px;
+  z-index: 40;
+  transition: opacity 0.16s ease;
+}
+.rail-zone.rail-hidden { opacity: 0; }
+
+.panel-wrap {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  bottom: 16px;
+  width: 280px;
+  z-index: 45;
+}
+.canvas-root .main-area {
+  transform-origin: left center;
+  transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.34s cubic-bezier(0.32, 0, 0, 1),
+              opacity 0.24s ease;
+}
+.canvas-root.shrink.aside-open .main-area {
+  transform: translateX(208px) scale(0.82);
+}
+
+.panel-enter-active, .panel-leave-active {
+  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.32, 0, 0, 1);
+}
+.panel-enter-from, .panel-leave-to {
+  opacity: 0;
+  transform: translateX(-14px) scale(0.97);
+}
+
+.dim {
+  position: absolute;
+  top: 16px;
+  left: 96px;
+  right: 16px;
+  bottom: 16px;
+  border-radius: var(--r-card);
+  background: rgba(13, 13, 26, 0.06);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.24s ease;
+  z-index: 20;
+}
+.dim.on { opacity: 1; }
+
 .main-area {
   position: absolute;
   top: 16px;
-  left: 312px;
+  left: 96px;
   right: 16px;
   bottom: 16px;
   display: flex;
@@ -158,8 +244,6 @@ function onPublish() {
   transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
-
-.canvas-root:has(.icon-rail) .main-area { left: 108px; }
 
 .page-scroll {
   flex: 1;
