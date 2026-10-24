@@ -2,7 +2,7 @@
 
 export const profile = {
   avatarChar: '聂',
-  avatar: new URL('../assets/avatar.png', import.meta.url).href,
+  avatar: '/assets/avatar.png',
   name: '聂志理',
   nameEn: 'NIE ZHILI',
   roles: ['产品经理', '项目经理'],
@@ -70,24 +70,41 @@ export const education = {
   }
 }
 
+// 项目经历 · 手风琴列表条目（与竞赛经历同款逻辑）
+// period/role/points/result 为展开详情；weight 与竞赛同标尺；attachments 为过程材料
 export const projects = [
   {
     title: '智能镜 Smart Mirror',
-    sub: '2024 – 至今 · 产品 3 项知识产权',
-    desc: '智能化妆镜产品项目。负责需求分析、原型设计与项目全流程推进，完成从 0 到 1 的产品落地，累计产出 3 项知识产权。',
-    tag: { text: '项目负责人', color: 'black' }
+    sub: '2025 – 2026 · 国家级大创 + 校级春萌双立项',
+    tag: { text: '项目负责人', color: 'black' },
+    period: '2025.03 – 2026.05',
+    role: '项目负责人（排名 1/3）',
+    points: '主持国家级大创项目（编号 202511057032），2026 年结题验收通过\n主导需求分析、功能定义与交互设计，推进软硬件协同开发与原型迭代\n搭建 React/Electron 前端 + Python/JS 双后端 + 树莓派嵌入式架构',
+    result: '国家级大创结题通过 · 软件著作权 1 项 + 发明专利受理 1 项',
+    weight: 92,
+    attachments: []
   },
   {
-    title: '智能门禁系统',
+    title: '多模态门禁识别系统',
     sub: '竞赛项目 · 团队核心成员',
-    desc: '基于人脸识别的智能门禁系统，参与整体方案设计与硬件选型验证，作品最终斩获国家级竞赛一等奖。',
-    tag: { text: '国家级一等奖', color: 'red' }
+    tag: { text: '省级二等奖', color: 'black' },
+    period: '2025',
+    role: '核心成员 · 方案与硬件',
+    points: '参与整体方案设计与硬件选型验证\n推进 Wi-Fi CSI 步态识别与红外传感双模态原型联调',
+    result: '浙江省物理实验与科技创新竞赛二等奖',
+    weight: 85,
+    attachments: []
   },
   {
     title: '福安公交车队项目',
-    sub: '在职项目 · 2026 · 200 辆车队规模',
-    desc: '负责 200 辆公交设备与视频准入验证，对接调度中心完成联通，通过数据表持续跟踪车队接入完成情况。',
-    tag: { text: '进行中', color: 'gray' }
+    sub: '在职项目 · 2026 · 200 辆设备实施规模',
+    tag: { text: '进行中', color: 'gray' },
+    period: '2026 · 进行中',
+    role: '设备准入与进度管理',
+    points: '负责 200 辆公交设备与视频准入验证\n对接调度中心完成联通\n通过数据表持续跟踪车队接入进度\n3 辆公交车 + 1 条线路完成全流程调试',
+    result: '车队接入推进中 · 调度中心已联通',
+    weight: 75,
+    attachments: []
   }
 ]
 
@@ -97,52 +114,200 @@ export const competitionStats = [
   { num: '备考中', label: '无人机测评认证' }
 ]
 
+// 竞赛经历 · 手风琴列表条目
+// period/role/points/result 为展开详情（points 多行文本，每行一条要点）
+// attachments 为过程材料（照片/PDF/Word/PPT），由 CMS 拖拽上传或手动添加
+// weight 为含金量分值（0-100），与荣誉墙同一标尺；新增条目后自动按 weight 降序重排
 export const competitions = [
   {
-    title: '智能门禁 · 国家级竞赛',
-    sub: '团队作品 · 负责系统方案与硬件选型',
-    desc: '基于人脸识别的智能门禁系统作品，从方案设计、原型验证到现场答辩全程参与，最终在国家级竞赛中斩获一等奖。',
-    tag: { text: '国家级一等奖', color: 'red' }
+    title: '全国大学生物理实验竞赛',
+    sub: '团队作品 · 负责 Wi-Fi 感知实验设计',
+    tag: { text: '国家级一等奖', color: 'red' },
+    period: '2025',
+    role: '实验方案设计与数据处理',
+    points: '围绕 Wi-Fi 电磁波菲涅耳区主题设计实验方案\n搭建基于 Wi-Fi 信号强度的菲涅耳区演示装置\n完成数据采集与分析，撰写参赛作品材料',
+    result: '第十一届全国大学生物理实验竞赛一等奖',
+    weight: 96,
+    attachments: []
+  },
+  {
+    title: 'Wi-Fi 无线感知课题组 · 两项赛项',
+    sub: '团队作品 · 负责实验设计、数据处理与硬件选型',
+    tag: { text: '国家级一等奖', color: 'red' },
+    period: '2025',
+    role: '实验方案设计 / 数据处理 / 硬件选型',
+    points: '作品一：基于 Wi-Fi 信号强度的电磁波菲涅耳区可视化实验装置（国赛参赛作品）\n作品二：Wi-Fi CSI 步态识别 + 红外传感多模态门禁识别系统（省赛参赛作品）\n完成数据采集与分析、硬件选型验证与参赛材料撰写',
+    result: '国家级一等奖（菲涅耳区实验）+ 省级二等奖（多模态门禁）\nIEEE ICSSE 2026 会议论文 1 篇',
+    weight: 90,
+    attachments: []
+  },
+  {
+    title: '浙江省物理实验与科技创新竞赛',
+    sub: '团队作品 · 多模态门禁识别系统',
+    tag: { text: '省级二等奖', color: 'black' },
+    period: '2025',
+    role: '系统方案与感知模块设计',
+    points: '基于 Wi-Fi 无线感知和红外传感设计多模态门禁识别系统\n完成"一走即通"作品的原型制作与测试',
+    result: '浙江省物理实验与科技创新竞赛二等奖',
+    weight: 77,
+    attachments: []
+  },
+  {
+    title: '中国大学生计算机设计大赛',
+    sub: '个人作品 · 树莓派智能书法镜',
+    tag: { text: '省级三等奖', color: 'black' },
+    period: '2025',
+    role: '作品设计与开发',
+    points: '设计"以镜鉴字"树莓派智能书法镜方案\n完成镜面显示与字体矫正功能开发',
+    result: '第 18 届计算机设计大赛浙江省级赛三等奖',
+    weight: 71,
+    attachments: []
+  },
+  {
+    title: '中美青年创客大赛',
+    sub: '团队作品 · 校级一等奖',
+    tag: { text: '校级一等奖', color: 'gray' },
+    period: '2026',
+    role: '创意方案与原型制作',
+    points: '参与创客主题方案构思与打磨\n完成参赛作品原型制作与路演展示',
+    result: '中美青年创客大赛校级一等奖',
+    weight: 68,
+    attachments: []
+  },
+  {
+    title: '三创赛',
+    sub: '团队作品 · 校级一等奖',
+    tag: { text: '校级一等奖', color: 'gray' },
+    period: '2026',
+    role: '商业计划书与路演答辩',
+    points: '参与项目商业模式设计\n撰写参赛计划书并完成校级路演答辩',
+    result: '三创赛校级一等奖',
+    weight: 64,
+    attachments: []
+  },
+  {
+    title: '中美青年创客大赛 · 杭州分赛区',
+    sub: '团队作品 · 优胜奖',
+    tag: { text: '分赛区优胜', color: 'gray' },
+    period: '2026',
+    role: '作品展示与评委问答',
+    points: '携校级一等奖作品晋级杭州分赛区\n完成作品展示与评委问答环节',
+    result: '中美青年创客大赛杭州分赛区优胜奖',
+    weight: 62,
+    attachments: []
   },
   {
     title: '无人机测评认证',
     sub: '个人认证 · 2026 · 错题复盘笔记',
-    desc: '系统备考无人机测评考试，建立并持续维护错题总结笔记，按知识模块复盘薄弱点，稳步推进认证目标。',
-    tag: { text: '备考中', color: 'gray' }
+    tag: { text: '备考中', color: 'gray' },
+    period: '2026 · 进行中',
+    role: '独立备考',
+    points: '系统备考无人机测评考试\n建立并持续维护错题总结笔记，按知识模块复盘薄弱点',
+    result: '备考中 · 目标取得测评认证',
+    weight: 52,
+    attachments: []
   }
 ]
 
+// 荣誉墙 · 证书照片墙条目 — image 指向 /assets/honors/ 下的压缩版，留空则显示占位框
+// weight 为含金量分值（0-100）：CMS 每次新增条目后按 weight 降序自动重排，此处默认顺序即降序
 export const honors = [
   {
-    eyebrow: 'COMPETITION',
-    title: '国家级竞赛一等奖',
-    desc: '智能门禁系统作品获国家级竞赛一等奖，负责系统方案设计与硬件选型。',
-    accent: 'red'
+    eyebrow: 'NATIONAL COMPETITION',
+    title: '全国大学生物理实验竞赛 · 一等奖',
+    desc: '作品《基于 Wi-Fi 的电磁波菲涅耳区实验》获第十一届全国大学生物理实验竞赛一等奖。',
+    accent: 'red',
+    image: '/assets/honors/physics-national-first.jpg',
+    weight: 96
   },
   {
     eyebrow: 'INTELLECTUAL PROPERTY',
-    title: '知识产权 × 3',
-    desc: '智能镜项目累计产出 3 项知识产权，覆盖软件著作权与专利成果。',
-    accent: 'black'
+    title: '实用新型专利 · 授权',
+    desc: '《一种具有脱离报警功能的登山扣》获国家知识产权局实用新型专利授权（ZL 2025 2 1528414.1）。',
+    accent: 'black',
+    image: '/assets/honors/patent-carabiner.jpg',
+    weight: 88
   },
   {
-    eyebrow: 'LEADERSHIP',
-    title: '智能镜项目负责人',
-    desc: '主导智能镜产品从 0 到 1 落地，负责需求分析、原型设计与全流程推进。',
-    accent: 'blue'
+    eyebrow: 'PROVINCIAL COMPETITION',
+    title: '浙江省物理实验与科技创新竞赛 · 二等奖',
+    desc: '作品《一"走"即通——基于 Wi-Fi 无线感知和红外传感的多模态门禁识别系统》获省级二等奖。',
+    accent: 'blue',
+    image: '/assets/honors/physics-zj-second.jpg',
+    weight: 77
   },
   {
-    eyebrow: 'CERTIFICATION',
-    title: '无人机测评认证',
-    desc: '系统备考中，持续维护错题总结笔记，按模块复盘薄弱知识点。',
-    accent: 'gray'
+    eyebrow: 'PROVINCIAL COMPETITION',
+    title: '中国大学生计算机设计大赛 · 省三等奖',
+    desc: '作品《"以镜鉴字"——基于树莓派的智能书法镜》获第 18 届计算机设计大赛浙江省级赛三等奖。',
+    accent: 'blue',
+    image: '/assets/honors/cs-design-zj-third.jpg',
+    weight: 71
+  },
+  {
+    eyebrow: 'MAKER COMPETITION',
+    title: '中美青年创客大赛 · 校级一等奖',
+    desc: '浙江科技大学中美青年创客大赛一等奖，作品《"以镜鉴字"基于树莓派的智能书法镜》。',
+    accent: 'red',
+    image: '/assets/honors/maker-zust-first.jpg',
+    weight: 68
+  },
+  {
+    eyebrow: 'E-COMMERCE CHALLENGE',
+    title: '三创赛 · 校级一等奖',
+    desc: '第十六届全国大学生电子商务"创新、创意及创业"挑战赛浙江科技大学校级赛一等奖。',
+    accent: 'black',
+    image: '/assets/honors/sanchuang-ecommerce-first.jpg',
+    weight: 64
+  },
+  {
+    eyebrow: 'MAKER COMPETITION',
+    title: '中美青年创客大赛杭州分赛区 · 优胜奖',
+    desc: '杭州分赛区主赛道优胜奖，参赛项目《基于树莓派的汉字学习镜》。',
+    accent: 'gray',
+    image: '/assets/honors/maker-hangzhou-winning.jpg',
+    weight: 62
+  },
+  {
+    eyebrow: 'INTELLECTUAL PROPERTY',
+    title: '发明专利 · 受理',
+    desc: '《一种多维度人机交互的电梯镜系统》发明专利申请获国家知识产权局受理（2025.05）。',
+    accent: 'gray',
+    image: '/assets/honors/patent-elevator-mirror.jpg',
+    weight: 60
+  },
+  {
+    eyebrow: 'INTELLECTUAL PROPERTY',
+    title: '发明专利 · 受理',
+    desc: '《一种基于 Wi-Fi 的电磁波及菲涅耳区可视化教学实验系统》发明专利申请获受理（2026.02）。',
+    accent: 'gray',
+    image: '/assets/honors/patent-wifi-fresnel.jpg',
+    weight: 58
+  },
+  {
+    eyebrow: 'INTELLECTUAL PROPERTY',
+    title: '实用新型专利 · 受理',
+    desc: '《一种基于无线感知与红外传感的门禁装置》专利申请获国家知识产权局受理（2026.04）。',
+    accent: 'gray',
+    image: '/assets/honors/patent-door-access.jpg',
+    weight: 55
+  },
+  {
+    eyebrow: 'SCHOLARSHIP',
+    title: '优秀学生奖学金 · 三等奖',
+    desc: '2024–2025 学年优秀学生三等奖，学业与竞赛综合表现获校级认可。',
+    accent: 'gray',
+    image: '/assets/honors/scholarship-third-2024.jpg',
+    weight: 52
   }
 ]
 
 export const cmsNav = [
   { key: 'profile',  label: '个人资料', active: false, dot: 'blue-5' },
+  { key: 'photos',   label: '照片库',   active: false, dot: 'blue-5' },
   { key: 'edu',      label: '教育经历', active: false, dot: 'blue-4' },
   { key: 'proj',     label: '项目经历', active: true,  dot: 'blue-3' },
   { key: 'comp',     label: '竞赛经历', active: false, dot: 'blue-2' },
-  { key: 'honor',    label: '荣誉墙',   active: false, dot: 'blue-1' }
+  { key: 'honor',    label: '荣誉墙',   active: false, dot: 'blue-1' },
+  { key: 'ai',       label: 'AI 设置',  active: false, dot: 'blue-5' }
 ]

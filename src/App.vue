@@ -6,6 +6,7 @@ import IconRail from './components/IconRail.vue'
 import TopBar from './components/TopBar.vue'
 import PasscodeModal from './components/PasscodeModal.vue'
 import CMSWindow from './components/CMSWindow.vue'
+import { isSessionUnlocked, markSessionUnlocked } from './lib/biometric.js'
 import HomeView from './views/HomeView.vue'
 import EducationView from './views/EducationView.vue'
 import ProjectsView from './views/ProjectsView.vue'
@@ -52,9 +53,15 @@ const currentTitle = computed(() => navItems.find(n => n.key === route.value)?.l
 function navigate(key) { route.value = key }
 function toggleSidebar() { sidebarCollapsed.value = !sidebarCollapsed.value }
 function openCMS() {
+  // 本次会话已验证过 → 直接进入，不再要求指纹/密码
+  if (isSessionUnlocked()) {
+    showCMS.value = true
+    return
+  }
   showPasscode.value = true
 }
-function onPasscodeSuccess() {
+function onUnlockSuccess() {
+  markSessionUnlocked()
   showPasscode.value = false
   showCMS.value = true
 }
@@ -111,7 +118,7 @@ function onPublish() {
         <PasscodeModal
           v-if="showPasscode"
           @close="closePasscode"
-          @success="onPasscodeSuccess"
+          @success="onUnlockSuccess"
         />
       </Transition>
 
@@ -131,10 +138,10 @@ function onPublish() {
 
 .main-area {
   position: absolute;
-  top: 0;
-  left: 280px;
-  right: 0;
-  bottom: 0;
+  top: 16px;
+  left: 312px;
+  right: 16px;
+  bottom: 16px;
   display: flex;
   flex-direction: column;
   padding: var(--pad-main);
@@ -143,7 +150,7 @@ function onPublish() {
   overflow: hidden;
 }
 
-.canvas-root:has(.icon-rail) .main-area { left: 76px; }
+.canvas-root:has(.icon-rail) .main-area { left: 108px; }
 
 .page-scroll {
   flex: 1;

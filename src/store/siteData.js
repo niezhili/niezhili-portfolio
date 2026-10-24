@@ -4,6 +4,7 @@
 // Views read from this store; CMS edits update it; changes survive refresh.
 import { reactive, watch } from 'vue'
 import {
+  profile,
   heroTags,
   stats,
   featured,
@@ -15,13 +16,15 @@ import {
   honors
 } from '../data/content.js'
 
-const STORAGE_KEY = 'portfolio-cms-data-v2'
+const STORAGE_KEY = 'portfolio-cms-data-v4'
 
 function clone(x) {
   return JSON.parse(JSON.stringify(x))
 }
 
 const defaults = {
+  avatar: profile.avatar,
+  photoLibrary: [{ src: profile.avatar, name: '默认头像', visible: true }],
   hero: {
     bio: '用产品思维连接技术与业务 —— 通信工程背景的产品 / 项目经理',
     tags: [...heroTags]
@@ -59,6 +62,17 @@ export const siteData = reactive({
   ),
   lastPublishedAt: (saved && saved.lastPublishedAt) || defaults.lastPublishedAt
 })
+
+// 旧存档迁移：竞赛/项目条目按标题合并默认值，补齐新增字段（period/role/points/result/weight/attachments）
+for (const key of ['competitions', 'projects']) {
+  if (Array.isArray(siteData[key])) {
+    const defs = defaults[key]
+    siteData[key] = siteData[key].map(s => {
+      const def = defs.find(d => d.title === s.title)
+      return def ? { ...clone(def), ...s } : { attachments: [], weight: 50, ...s }
+    })
+  }
+}
 
 // Debounced auto-save on any change
 let timer = null

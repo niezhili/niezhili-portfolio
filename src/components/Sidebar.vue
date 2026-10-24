@@ -1,17 +1,27 @@
 <script setup>
+import { ref } from 'vue'
 import { profile, navItems } from '../data/content.js'
+import { siteData } from '../store/siteData.js'
+import AvatarLightbox from './AvatarLightbox.vue'
 
 defineProps({ route: String })
 const emit = defineEmits(['navigate'])
+
+const showAvatarZoom = ref(false)
 </script>
 
 <template>
   <aside class="sidebar glass">
     <!-- Brand -->
     <div class="brand">
-      <div class="avatar">
-        <img :src="profile.avatar" :alt="profile.name" />
-      </div>
+      <button
+        class="avatar"
+        type="button"
+        aria-label="查看头像大图"
+        @click="showAvatarZoom = true"
+      >
+        <img :src="siteData.avatar" :alt="profile.name" />
+      </button>
       <div class="brand-text">
         <div class="name">{{ profile.name }}</div>
         <div class="name-en">{{ profile.nameEn }}</div>
@@ -51,19 +61,23 @@ const emit = defineEmits(['navigate'])
     </div>
 
     <div class="footer">Copyright 2026 · Portfolio</div>
+
+    <AvatarLightbox
+      v-if="showAvatarZoom"
+      @close="showAvatarZoom = false"
+    />
   </aside>
 </template>
 
 <style scoped>
 .sidebar {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 16px;
+  left: 16px;
+  bottom: 16px;
   width: 280px;
-  height: 100%;
   padding: var(--pad-sidebar-y) var(--pad-sidebar-x);
-  border-radius: 0;
-  border-right: 1px solid var(--glass-stroke);
+  border-right: none;
   display: flex;
   flex-direction: column;
   gap: var(--gap-sidebar);
@@ -80,6 +94,8 @@ const emit = defineEmits(['navigate'])
 .avatar {
   width: 64px;
   height: 64px;
+  padding: 0;
+  border: none;
   border-radius: var(--r-dot);
   background: #fff;
   box-shadow: 0 6px 16px rgba(31, 31, 89, 0.18);
@@ -88,7 +104,14 @@ const emit = defineEmits(['navigate'])
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.18s ease;
 }
+.avatar:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 20px rgba(31, 31, 89, 0.26);
+}
+.avatar:active { transform: scale(0.96); }
 .avatar img {
   width: 100%;
   height: 100%;

@@ -1,13 +1,14 @@
 <script setup>
-import { profile, navItems } from '../data/content.js'
+import { navItems } from '../data/content.js'
+import { siteData } from '../store/siteData.js'
 
 defineProps({ route: String })
 const emit = defineEmits(['navigate'])
 </script>
 
 <template>
-  <aside class="icon-rail">
-    <div class="avatar-sm"><img :src="profile.avatar" :alt="profile.name" /></div>
+  <aside class="icon-rail glass">
+    <div class="avatar-sm"><img :src="siteData.avatar" alt="个人头像" /></div>
 
     <nav class="rail-nav">
       <button
@@ -27,15 +28,11 @@ const emit = defineEmits(['navigate'])
 <style scoped>
 .icon-rail {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 16px;
+  left: 16px;
+  bottom: 16px;
   width: 76px;
-  height: 100%;
   padding: 24px 16px;
-  background: rgba(255, 255, 255, 0.35);
-  border-right: 1px solid var(--glass-stroke);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
   display: flex;
   flex-direction: column;
   gap: 24px;
