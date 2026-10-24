@@ -1,10 +1,14 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { siteData } from '../store/siteData.js'
+import featImg from '../assets/feat-smart-mirror.png'
 
 const projects = siteData.projects
 
-// ---------- 手风琴：单开，点击切换 ----------
+// 有实拍/渲染图的项目用图，其余用首字排版块占位
+const covers = { '智能镜 Smart Mirror': featImg }
+
+// ---------- 编辑目录：编号 + 大字级，展开后原位下推 ----------
 const openIdx = ref(-1)
 function toggle(i) {
   openIdx.value = openIdx.value === i ? -1 : i
@@ -12,114 +16,153 @@ function toggle(i) {
 function pointLines(p) {
   return String(p.points || '').split('\n').map(s => s.trim()).filter(Boolean)
 }
+const pad = n => String(n).padStart(2, '0')
+
+// ---------- 右侧玻璃预览卡：跟随当前行纵向滑动 ----------
+const CARD_H = 150
+const hovered = ref(0)
+const cardY = ref(0)
+const rowEls = []
+function setRow(el, i) { if (el) rowEls[i] = el }
+function alignCard(i) {
+  const el = rowEls[i]
+  if (el) cardY.value = Math.max(0, el.offsetTop + el.offsetHeight / 2 - CARD_H / 2)
+}
+function onEnter(i) {
+  hovered.value = i
+  alignCard(i)
+}
+function onLeave() {
+  hovered.value = 0
+  alignCard(0)
+}
+
+const doneCount = computed(() => projects.filter(p => !/进行中/.test(p.tag?.text || '')).length)
+const liveCount = computed(() => projects.length - doneCount.value)
+
+const active = computed(() => projects[hovered.value] || projects[0] || null)
+const activeCover = computed(() => (active.value ? covers[active.value.title] : ''))
+const activeFiles = computed(() => (active.value?.attachments || []).length)
 
 // ---------- 过程材料悬浮预览 ----------
-const viewer = ref(null) // { name, kind, path, preview }
+const viewer = ref(null)
 const isImg = computed(() => viewer.value?.kind === 'image')
 const viewSrc = computed(() =>
   isImg.value ? viewer.value?.path : viewer.value?.preview || viewer.value?.path || ''
 )
 const canEmbed = computed(() => !!viewer.value && !isImg.value && /\.(pdf|html?)$/i.test(viewSrc.value))
-function openFile(a) {
-  viewer.value = a
-}
-function closeViewer() {
-  viewer.value = null
-}
-function onKey(e) {
-  if (e.key === 'Escape') closeViewer()
-}
-onMounted(() => window.addEventListener('keydown', onKey))
+function openFile(a) { viewer.value = a }
+function closeViewer() { viewer.value = null }
+function onKey(e) { if (e.key === 'Escape') closeViewer() }
+onMounted(() => {
+  window.addEventListener('keydown', onKey)
+  nextTick(() => alignCard(0))
+})
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+
+// 展开/收起后行高变化，预览卡重新对齐到当前行
+watch([openIdx, hovered], () => nextTick(() => alignCard(hovered.value)))
 </script>
 
 <template>
   <div class="page">
-    <div class="proj-list">
-      <article
-        v-for="(p, i) in projects"
-        :key="p.title"
-        class="proj glass"
-        :class="{ open: openIdx === i }"
-      >
-        <button class="proj-head" @click="toggle(i)">
-          <div class="head-text">
-            <h2 class="title">{{ p.title }}</h2>
-            <div class="sub">{{ p.sub }}</div>
-          </div>
-          <div class="head-right">
-            <span class="tag" :class="p.tag?.color">{{ p.tag?.text }}</span>
-            <svg
-              class="chev"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
+    <div class="list-col">
+      <div class="head">
+        <span class="eyebrow">PROJECTS · {{ pad(projects.length) }}</span>
+        <span class="hint">按含金量排序</span>
+      </div>
+
+      <div class="rows">
+        <article
+          v-for="(p, i) in projects"
+          :key="p.title"
+          :ref="el => setRow(el, i)"
+          class="row"
+          :class="{ open: openIdx === i }"
+        >
+          <button
+            class="row-head"
+            :aria-expanded="openIdx === i"
+            @click="toggle(i)"
+            @mouseenter="onEnter(i)"
+            @focus="onEnter(i)"
+            @mouseleave="onLeave"
+            @blur="onLeave"
+          >
+            <span class="num">{{ pad(i + 1) }}</span>
+            <span class="head-main">
+              <span class="row-title">{{ p.title }}</span>
+              <span class="row-sub">{{ p.sub }}</span>
+            </span>
+            <span class="row-tag" :class="p.tag?.color">{{ p.tag?.text }}</span>
+            <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-          </div>
-        </button>
+          </button>
 
-        <div class="proj-body">
-          <div class="proj-body-inner">
-            <div v-if="p.period || p.role" class="meta">
-              <span v-if="p.period" class="meta-item">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
-                  <path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                {{ p.period }}
-              </span>
-              <span v-if="p.role" class="meta-item">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
-                  <path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                {{ p.role }}
-              </span>
-            </div>
+          <div class="row-body">
+            <div class="row-inner">
+              <div class="content">
+                <div v-if="p.insight" class="block">
+                  <div class="block-label">我的判断</div>
+                  <p class="insight">{{ p.insight }}</p>
+                </div>
 
-            <ul v-if="pointLines(p).length" class="points">
-              <li v-for="(line, j) in pointLines(p)" :key="j">{{ line }}</li>
-            </ul>
+                <div v-if="pointLines(p).length" class="block">
+                  <div class="block-label">关键动作</div>
+                  <ul class="points">
+                    <li v-for="(line, j) in pointLines(p)" :key="j">{{ line }}</li>
+                  </ul>
+                </div>
 
-            <div v-if="p.result" class="result">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M7 6H4a1 1 0 00-1 1c0 2.5 1.8 4 4 4M17 6h3a1 1 0 011 1c0 2.5-1.8 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              {{ p.result }}
-            </div>
+                <div v-if="p.result" class="result">{{ p.result }}</div>
 
-            <div v-if="(p.attachments || []).length" class="files">
-              <div class="files-label">过程材料 · {{ p.attachments.length }}</div>
-              <div class="files-row">
-                <button
-                  v-for="(a, j) in p.attachments"
-                  :key="j"
-                  class="file-chip"
-                  @click="openFile(a)"
-                >
-                  <svg v-if="a.kind === 'image'" width="13" height="13" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
-                    <circle cx="9" cy="10" r="1.6" fill="currentColor"/>
-                    <path d="M4 18l5-5 3 3 4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                  </svg>
-                  <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                    <path d="M14 3v5h5M9 13h6M9 17h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                  {{ a.name }}
-                </button>
+                <div v-if="(p.attachments || []).length" class="block files">
+                  <div class="block-label">原件</div>
+                  <div class="files-row">
+                    <button
+                      v-for="(a, j) in p.attachments"
+                      :key="j"
+                      class="file-chip"
+                      @click="openFile(a)"
+                    >
+                      <svg v-if="a.kind === 'image'" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="9" cy="10" r="1.6" fill="currentColor"/>
+                        <path d="M4 18l5-5 3 3 4-4 4 4" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                      </svg>
+                      <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        <path d="M14 3v5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                      {{ a.name }}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </article>
+        </article>
+      </div>
+
+      <div class="foot">
+        <span>共 {{ pad(projects.length) }} 个项目</span>
+        <span>已结题 {{ pad(doneCount) }} · 进行中 {{ pad(liveCount) }}</span>
+      </div>
     </div>
 
-    <!-- 过程材料悬浮预览窗 -->
+    <aside class="preview-col">
+      <div v-if="active" class="preview-card" :style="{ transform: `translateY(${cardY}px)` }">
+        <div class="cover">
+          <img v-if="activeCover" :src="activeCover" :alt="active.title" />
+          <span v-else class="mono">{{ active.title.slice(0, 1) }}</span>
+        </div>
+        <div class="p-title">{{ active.title }}</div>
+        <div class="p-meta">{{ active.tag?.text }}</div>
+        <div v-if="activeFiles" class="p-files">{{ activeFiles }} 份原件可查</div>
+      </div>
+    </aside>
+
     <div v-if="viewer" class="viewer-overlay" @click.self="closeViewer">
       <div class="viewer glass">
         <div class="viewer-top">
@@ -153,120 +196,243 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </template>
 
 <style scoped>
-.page { display: flex; flex-direction: column; gap: 18px; }
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 196px;
+  gap: 32px;
+  align-items: start;
+}
 
-/* ---------- 手风琴列表 ---------- */
-.proj-list { display: flex; flex-direction: column; gap: 12px; }
-.proj { padding: 0; overflow: hidden; transition: border-color 0.2s ease; }
-.proj.open { border-color: var(--blue-500); }
-
-.proj-head {
+/* ---------- 目录头 ---------- */
+.head {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(31, 31, 89, 0.18);
+}
+.eyebrow {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--blue-500);
+}
+.hint { font-size: 11px; color: var(--ink-3); }
+
+/* ---------- 目录行 ---------- */
+.rows { position: relative; }
+.row { border-bottom: 1px solid rgba(31, 31, 89, 0.16); }
+
+.row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
   width: 100%;
-  padding: 16px 22px;
+  padding: 20px 0 18px;
   border: none;
   background: transparent;
   text-align: left;
   cursor: pointer;
 }
-.proj-head:hover { background: rgba(87, 131, 255, 0.04); }
-.head-text { min-width: 0; }
-.title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ink-1);
-}
-.sub { margin: 4px 0 0; font-size: 12px; color: var(--ink-3); }
-.head-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.tag {
-  padding: 3px 10px;
-  border-radius: var(--r-pill);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.tag.red { background: var(--accent-red); }
-.tag.black { background: var(--accent-black); }
-.tag.gray { background: var(--accent-gray); }
-.chev { color: var(--ink-4); transition: transform 0.3s ease; flex-shrink: 0; }
-.proj.open .chev { transform: rotate(180deg); }
 
-.proj-body {
+.num {
+  width: 34px;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: rgba(10, 132, 255, 0.55);
+  transition: color 0.2s ease;
+}
+.row:hover .num,
+.row.open .num { color: var(--blue-500); }
+
+.head-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+
+.row-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--ink-1);
+  transition: color 0.2s ease;
+}
+.row:hover .row-title,
+.row.open .row-title { color: var(--ink-1); }
+
+.row-sub {
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+
+.row-tag {
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  border: 1px solid currentColor;
+  align-self: center;
+}
+.row-tag.black { color: var(--accent-black); }
+.row-tag.red { color: var(--accent-red); }
+.row-tag.gray { color: var(--accent-gray-text); background: rgba(255, 255, 255, 0.45); }
+
+.chev {
+  flex-shrink: 0;
+  align-self: center;
+  color: var(--ink-4);
+  transition: transform 0.3s ease, color 0.2s ease;
+}
+.row.open .chev { transform: rotate(180deg); color: var(--blue-500); }
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  font-size: 11px;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+
+/* ---------- 展开体 ---------- */
+.row-body {
   display: grid;
   grid-template-rows: 0fr;
   transition: grid-template-rows 0.35s ease;
 }
-.proj.open .proj-body { grid-template-rows: 1fr; }
-.proj-body-inner {
-  overflow: hidden;
-  padding: 0 22px;
-}
-.proj.open .proj-body-inner { padding-bottom: 18px; }
+.row.open .row-body { grid-template-rows: 1fr; }
+.row-inner { overflow: hidden; }
 
-.meta { display: flex; flex-wrap: wrap; gap: 16px; padding-top: 14px; }
-.meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  color: var(--ink-2);
+.content {
+  position: relative;
+  margin: 0 0 22px 52px;
+  padding: 2px 0 0 26px;
+}
+.content::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 0;
+  width: 2px;
+  background: var(--blue-500);
+  opacity: 0.35;
+}
+
+.block { margin-bottom: 16px; }
+.block-label {
+  font-size: 10px;
   font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--blue-500);
+  margin-bottom: 7px;
 }
-.meta-item svg { color: var(--blue-500); }
 
-.points { margin: 10px 0 0; padding: 0 0 0 18px; }
+.insight {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ink-1);
+  letter-spacing: -0.005em;
+}
+
+.points { margin: 0; padding: 0; list-style: none; }
 .points li {
-  font-size: 13px;
+  position: relative;
+  padding-left: 15px;
+  font-size: 12.5px;
+  line-height: 1.75;
   color: var(--ink-2);
-  line-height: 1.7;
+}
+.points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--blue-500);
+  opacity: 0.45;
 }
 
 .result {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 12px;
-  padding: 9px 14px;
-  border-left: 3px solid var(--accent-black);
-  background: rgba(31, 31, 89, 0.05);
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-left: 2px solid var(--accent-black);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 0 10px 10px 0;
   font-size: 12.5px;
   font-weight: 600;
+  line-height: 1.6;
   color: var(--ink-1);
 }
-.result svg { color: var(--accent-black); flex-shrink: 0; }
 
-.files { margin-top: 14px; }
-.files-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--ink-4);
-  margin-bottom: 8px;
-}
-.files-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.files { margin-bottom: 0; }
+.files-row { display: flex; flex-wrap: wrap; gap: 7px; }
 .file-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid #e5e7ef;
+  gap: 5px;
+  padding: 5px 11px;
+  border: 1px solid rgba(10, 132, 255, 0.28);
   border-radius: var(--r-pill);
-  background: #fff;
-  color: var(--ink-2);
-  font-size: 12px;
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--blue-600);
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: border 0.15s ease, color 0.15s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
-.file-chip svg { color: var(--blue-500); }
-.file-chip:hover { border-color: var(--blue-500); color: var(--blue-600); }
+.file-chip:hover { border-color: var(--blue-500); background: #fff; }
+
+/* ---------- 右侧预览卡 ---------- */
+.preview-col { padding-top: 34px; }
+.preview-card {
+  width: 196px;
+  padding: 9px;
+  background: var(--glass-fill-strong);
+  border: 1px solid var(--glass-stroke);
+  border-radius: 16px;
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow: 0 18px 40px var(--glass-shadow);
+  transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.cover {
+  height: 88px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cover img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.92); }
+.mono {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 600;
+  color: rgba(10, 132, 255, 0.45);
+  line-height: 1;
+}
+.p-title {
+  margin-top: 9px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-1);
+  line-height: 1.3;
+}
+.p-meta { margin-top: 3px; font-size: 10.5px; color: var(--ink-4); }
+.p-files { margin-top: 5px; font-size: 10.5px; color: var(--blue-600); }
 
 /* ---------- 悬浮预览窗 ---------- */
 .viewer-overlay {
@@ -350,17 +516,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   align-items: center;
   justify-content: center;
 }
-.viewer-body img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-.viewer-body iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  background: #fff;
-}
+.viewer-body img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.viewer-body iframe { width: 100%; height: 100%; border: none; background: #fff; }
 .no-preview {
   display: flex;
   flex-direction: column;

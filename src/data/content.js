@@ -71,17 +71,20 @@ export const education = {
   }
 }
 
-// 项目经历 · 手风琴列表条目（与竞赛经历同款逻辑）
-// period/role/points/result 为展开详情；weight 与竞赛同标尺；attachments 为过程材料
+// 项目经历 · 编辑目录条目
+// 每条的阅读顺序对应面试官的判断路径：
+//   sub（够不够格）→ insight（有没有判断力）→ points（能力边界）→ result（可否验证）→ attachments（原件）
+// points 多行文本，每行一条要点；weight 为含金量分值（0-100），列表按此降序
 export const projects = [
   {
     title: '智能镜 Smart Mirror',
-    sub: '2025 – 2026 · 国家级大创 + 校级春萌双立项',
+    sub: '国家级大创 202511057032 · 负责人 1/3 · 2025.03–2026.05',
     tag: { text: '项目负责人', color: 'black' },
     period: '2025.03 – 2026.05',
     role: '项目负责人（排名 1/3）',
-    points: '主持国家级大创项目（编号 202511057032），2026 年结题验收通过\n主导需求分析、功能定义与交互设计，推进软硬件协同开发与原型迭代\n搭建 React/Electron 前端 + Python/JS 双后端 + 树莓派嵌入式架构',
-    result: '国家级大创结题通过 · 软件著作权 1 项 + 发明专利受理 1 项',
+    insight: '通用智能镜已经饱和，真正的缺口是国际学生认汉字——把镜子从「信息屏」改成「学习工具」。',
+    points: '收敛到「笔顺跟读」单一核心场景，砍掉日程、天气等通用功能\n针对镜面成像重做界面层级：镜像反射下的字号、对比度与信息密度单独调过\n拉通软硬件三方：React/Electron 前端 + Python/JS 双后端 + 树莓派，跟进两轮原型迭代',
+    result: '大创结题验收通过 · 软著 1 项（2026SR0902267）· 发明专利受理 1 项 · 春萌计划同期结题',
     weight: 92,
     attachments: [
       { name: '大创立项公示', kind: 'pdf', path: '/assets/projects/proj-dachuang-approval.pdf', preview: '' },
@@ -92,11 +95,12 @@ export const projects = [
   },
   {
     title: '多模态门禁识别系统',
-    sub: '竞赛项目 · 团队核心成员',
+    sub: '浙江省物理实验与科技创新竞赛 · 核心成员 · 2025',
     tag: { text: '省级二等奖', color: 'black' },
     period: '2025',
     role: '核心成员 · 方案与硬件',
-    points: '参与整体方案设计与硬件选型验证\n推进 Wi-Fi CSI 步态识别与红外传感双模态原型联调',
+    insight: '门禁真正的痛点是「腾不出手」，不是识别率——把开门的动作压到走过去这一下。',
+    points: '定下 Wi-Fi CSI 步态 + 红外传感双模态方案，解决单模态的误触发\n负责硬件选型与联调，完成「一走即通」原型',
     result: '浙江省物理实验与科技创新竞赛二等奖',
     weight: 85,
     attachments: []
@@ -107,8 +111,9 @@ export const projects = [
     tag: { text: '进行中', color: 'gray' },
     period: '2026 · 进行中',
     role: '设备准入与进度管理',
-    points: '负责 200 辆公交设备与视频准入验证\n对接调度中心完成联通\n通过数据表持续跟踪车队接入进度\n3 辆公交车 + 1 条线路完成全流程调试',
-    result: '车队接入推进中 · 调度中心已联通',
+    insight: '200 辆车靠人盯不住——先把准入标准落成清单，再用数据表跟踪，才能批量推进。',
+    points: '制定设备与视频准入清单，按车逐项核验\n对接调度中心完成联通，3 辆车 + 1 条线路跑通全流程\n用数据表跟踪全车队接入进度，及时暴露卡点',
+    result: '调度中心已联通 · 全车队接入推进中',
     weight: 75,
     attachments: []
   }

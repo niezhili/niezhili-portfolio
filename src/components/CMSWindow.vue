@@ -61,7 +61,8 @@ const sections = {
       ]},
       { title: '项目列表', path: 'projects', fields: [
         { key: 'title', label: '名称' },
-        { key: 'sub', label: '副标题' },
+        { key: 'sub', label: '副标题（级别 · 角色 · 时间）' },
+        { key: 'insight', label: '我的判断（一句话）', type: 'textarea' },
         { key: 'tag.text', label: '角标文字' },
         { key: 'tag.color', label: '角标配色（red/black/gray）' },
         { key: 'period', label: '时间' },

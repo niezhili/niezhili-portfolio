@@ -84,7 +84,7 @@ for (const key of ['competitions', 'projects']) {
 // content.js 新增条目（论文 / 软著 / 语言证书等）后，浏览器里的旧存档不会自动带上。
 // 这里按版本号做一次增量合并：只追加缺失条目、刷新统计与简介文本，
 // 用户自己在 CMS 里改过的头像、照片库、条目详情一律保留。标记写入后不再重复播种。
-const SEED_REV = '2026-10-24-academic-ip'
+const SEED_REV = '2026-10-24-projects-editorial'
 const SEED_KEY = 'portfolio-cms-seed-rev'
 
 function seedContent() {
@@ -94,12 +94,22 @@ function seedContent() {
   siteData.education = clone(defaults.education)
   siteData.featured = clone(defaults.featured)
   siteData.hero = { ...siteData.hero, tags: clone(defaults.hero.tags) }
-  // 2) 三类列表追加缺失条目，并按含金量降序重排
+  // 2) 三类列表追加缺失条目 → 文案字段以 content.js 为准 → 按含金量降序重排
+  //    用户上传的材料与荣誉图片一律保留，不被默认值覆盖
   for (const key of ['honors', 'competitions', 'projects']) {
     if (!Array.isArray(siteData[key])) continue
     for (const def of defaults[key]) {
       if (!siteData[key].some(x => x && x.title === def.title)) siteData[key].push(clone(def))
     }
+    siteData[key] = siteData[key].map(x => {
+      const def = defaults[key].find(d => d.title === x.title)
+      if (!def) return x
+      const keep = {}
+      const files = Array.isArray(x.attachments) ? x.attachments : []
+      keep.attachments = files.length ? files : clone(def.attachments || [])
+      if (key === 'honors' && x.image) keep.image = x.image
+      return { ...clone(def), ...keep }
+    })
     siteData[key].sort((a, b) => (b.weight || 0) - (a.weight || 0))
   }
 }

@@ -13,7 +13,16 @@ import ProjectsView from './views/ProjectsView.vue'
 import CompetitionsView from './views/CompetitionsView.vue'
 import HonorsView from './views/HonorsView.vue'
 
-const route = ref('home')
+// 支持 ?v=proj 之类深链，方便直接分享到某一页（键名与 navItems 一致）
+function initialRoute() {
+  try {
+    const v = new URLSearchParams(window.location.search).get('v')
+    if (v && navItems.some(n => n.key === v)) return v
+  } catch (e) { /* ignore */ }
+  return 'home'
+}
+
+const route = ref(initialRoute())
 const sidebarCollapsed = ref(false)
 const showPasscode = ref(false)
 const showCMS = ref(false)
