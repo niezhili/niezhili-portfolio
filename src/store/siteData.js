@@ -69,9 +69,46 @@ for (const key of ['competitions', 'projects']) {
     const defs = defaults[key]
     siteData[key] = siteData[key].map(s => {
       const def = defs.find(d => d.title === s.title)
-      return def ? { ...clone(def), ...s } : { attachments: [], weight: 50, ...s }
+      if (!def) return { attachments: [], weight: 50, ...s }
+      const merged = { ...clone(def), ...s }
+      // 过程材料补齐：存档里还没有材料时用默认值填充，已有上传则不覆盖
+      if ((!Array.isArray(s.attachments) || s.attachments.length === 0) && def.attachments?.length) {
+        merged.attachments = clone(def.attachments)
+      }
+      return merged
     })
   }
+}
+
+// ---------- 内容版本化播种 ----------
+// content.js 新增条目（论文 / 软著 / 语言证书等）后，浏览器里的旧存档不会自动带上。
+// 这里按版本号做一次增量合并：只追加缺失条目、刷新统计与简介文本，
+// 用户自己在 CMS 里改过的头像、照片库、条目详情一律保留。标记写入后不再重复播种。
+const SEED_REV = '2026-10-24-academic-ip'
+const SEED_KEY = 'portfolio-cms-seed-rev'
+
+function seedContent() {
+  // 1) 统计数字与简介类文本整体刷新为新默认值
+  siteData.stats = clone(defaults.stats)
+  siteData.competitionStats = clone(defaults.competitionStats)
+  siteData.education = clone(defaults.education)
+  siteData.featured = clone(defaults.featured)
+  siteData.hero = { ...siteData.hero, tags: clone(defaults.hero.tags) }
+  // 2) 三类列表追加缺失条目，并按含金量降序重排
+  for (const key of ['honors', 'competitions', 'projects']) {
+    if (!Array.isArray(siteData[key])) continue
+    for (const def of defaults[key]) {
+      if (!siteData[key].some(x => x && x.title === def.title)) siteData[key].push(clone(def))
+    }
+    siteData[key].sort((a, b) => (b.weight || 0) - (a.weight || 0))
+  }
+}
+
+let seeded = false
+try { seeded = localStorage.getItem(SEED_KEY) === SEED_REV } catch (e) { seeded = true }
+if (!seeded) {
+  seedContent()
+  try { localStorage.setItem(SEED_KEY, SEED_REV) } catch (e) { /* ignore */ }
 }
 
 // Debounced auto-save on any change

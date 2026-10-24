@@ -19,12 +19,12 @@ export const navItems = [
   { key: 'honor', label: '荣誉墙', dot: 'blue-1' }
 ]
 
-export const heroTags = ['智能镜负责人', '3 项知识产权', '国家级一等奖', '福安项目']
+export const heroTags = ['智能镜负责人', '专利 4 项 · 软著 1 项', '国家级一等奖', 'IEEE 会议论文', '福安项目']
 
 export const stats = [
   { num: '5+', label: '主导项目' },
-  { num: '3',  label: '项知识产权' },
-  { num: '1',  label: '项国家级奖项' }
+  { num: '4',  label: '项专利（1 项授权）' },
+  { num: '1',  label: '篇 IEEE 会议论文' }
 ]
 
 export const featured = {
@@ -33,7 +33,7 @@ export const featured = {
   title: '智能镜产品设计',
   desc: '主导智能镜产品从 0 到 1：需求调研、功能定义、交互设计与开发跟进，协同软硬件团队推进落地。',
   imageAlt: '智能镜产品预览',
-  footTags: '需求分析 · 交互设计 · 项目管理 · 知识产权 ×3'
+  footTags: '需求分析 · 交互设计 · 项目管理 · 专利 ×4 · 软著 ×1'
 }
 
 export const sideProjects = [
@@ -56,13 +56,14 @@ export const education = {
     period: '2023 – 2027',
     degree: '本科 · 通信工程',
     sub: '通信工程专业 · 2027 届毕业生',
-    desc: '主修通信原理、嵌入式系统与信号处理，方向偏软硬件结合；在校期间主导智能镜项目并完成 3 项知识产权，获国家级竞赛一等奖。',
+    desc: '主修通信原理、嵌入式系统与信号处理，方向偏软硬件结合；在校期间主导国家级大创智能镜项目，获专利 4 项（1 项授权）、软件著作权 1 项，国家级竞赛一等奖 1 项，并参与 IEEE ICSSE 2026 会议论文 1 篇。',
     courses: ['通信原理', '嵌入式系统', '信号处理', '数字电路', '数据结构', '计算机网络']
   },
   ongoing: {
     title: '持续学习',
     status: 'ONGOING',
     rows: [
+      { tag: '已录用', text: 'IEEE ICSSE 2026 · PI-TEAL 教学模型论文（第 5 作者，IEEE 版权已签署）' },
       { tag: '备考中', text: '无人机测评认证 · 错题总结复盘，持续巩固薄弱知识点' },
       { tag: 'B1',    text: '英语学习 · 拉丁词根词积累与口语对话训练' },
       { tag: '方法论', text: '产品经理方法论 · 需求分析与项目管理实践' }
@@ -82,7 +83,12 @@ export const projects = [
     points: '主持国家级大创项目（编号 202511057032），2026 年结题验收通过\n主导需求分析、功能定义与交互设计，推进软硬件协同开发与原型迭代\n搭建 React/Electron 前端 + Python/JS 双后端 + 树莓派嵌入式架构',
     result: '国家级大创结题通过 · 软件著作权 1 项 + 发明专利受理 1 项',
     weight: 92,
-    attachments: []
+    attachments: [
+      { name: '大创立项公示', kind: 'pdf', path: '/assets/projects/proj-dachuang-approval.pdf', preview: '' },
+      { name: '大创结题验收通知', kind: 'pdf', path: '/assets/projects/proj-dachuang-closure.pdf', preview: '' },
+      { name: '春萌立项通知', kind: 'pdf', path: '/assets/projects/proj-chunmeng-approval.pdf', preview: '' },
+      { name: '春萌结题通知', kind: 'pdf', path: '/assets/projects/proj-chunmeng-closure.pdf', preview: '' }
+    ]
   },
   {
     title: '多模态门禁识别系统',
@@ -110,8 +116,8 @@ export const projects = [
 
 export const competitionStats = [
   { num: '01', label: '国家级竞赛奖项' },
-  { num: '03', label: '知识产权产出' },
-  { num: '备考中', label: '无人机测评认证' }
+  { num: '05', label: '知识产权产出' },
+  { num: '01', label: 'IEEE 会议论文' }
 ]
 
 // 竞赛经历 · 手风琴列表条目
@@ -137,7 +143,7 @@ export const competitions = [
     period: '2025',
     role: '实验方案设计 / 数据处理 / 硬件选型',
     points: '作品一：基于 Wi-Fi 信号强度的电磁波菲涅耳区可视化实验装置（国赛参赛作品）\n作品二：Wi-Fi CSI 步态识别 + 红外传感多模态门禁识别系统（省赛参赛作品）\n完成数据采集与分析、硬件选型验证与参赛材料撰写',
-    result: '国家级一等奖（菲涅耳区实验）+ 省级二等奖（多模态门禁）\nIEEE ICSSE 2026 会议论文 1 篇',
+    result: '国家级一等奖（菲涅耳区实验）+ 省级二等奖（多模态门禁）\nIEEE ICSSE 2026 会议论文 1 篇（第 5 作者）',
     weight: 90,
     attachments: []
   },
@@ -221,12 +227,28 @@ export const honors = [
     weight: 96
   },
   {
+    eyebrow: 'IEEE CONFERENCE PAPER',
+    title: 'IEEE ICSSE 2026 · 会议论文',
+    desc: '《Exploration and Practice of the PI-TEAL Teaching Model》被 IEEE ICSSE 2026 录用，IEEE 版权已签署（Paper 120，第 5 作者）。',
+    accent: 'blue',
+    image: '/assets/honors/paper-icsse2026-pi-teal.jpg',
+    weight: 90
+  },
+  {
     eyebrow: 'INTELLECTUAL PROPERTY',
     title: '实用新型专利 · 授权',
     desc: '《一种具有脱离报警功能的登山扣》获国家知识产权局实用新型专利授权（ZL 2025 2 1528414.1）。',
     accent: 'black',
     image: '/assets/honors/patent-carabiner.jpg',
     weight: 88
+  },
+  {
+    eyebrow: 'SOFTWARE COPYRIGHT',
+    title: '软件著作权 · 智能镜子系统 V2.0',
+    desc: '《基于树莓派的智能镜子系统 V2.0》经中国版权保护中心登记（登记号 2026SR0902267，证书号 软著登字第 18116548 号）。',
+    accent: 'black',
+    image: '/assets/honors/software-copyright-mirror.jpg',
+    weight: 80
   },
   {
     eyebrow: 'PROVINCIAL COMPETITION',
@@ -270,7 +292,7 @@ export const honors = [
   },
   {
     eyebrow: 'INTELLECTUAL PROPERTY',
-    title: '发明专利 · 受理',
+    title: '发明专利 · 受理（电梯镜系统）',
     desc: '《一种多维度人机交互的电梯镜系统》发明专利申请获国家知识产权局受理（2025.05）。',
     accent: 'gray',
     image: '/assets/honors/patent-elevator-mirror.jpg',
@@ -278,7 +300,7 @@ export const honors = [
   },
   {
     eyebrow: 'INTELLECTUAL PROPERTY',
-    title: '发明专利 · 受理',
+    title: '发明专利 · 受理（菲涅耳区教学系统）',
     desc: '《一种基于 Wi-Fi 的电磁波及菲涅耳区可视化教学实验系统》发明专利申请获受理（2026.02）。',
     accent: 'gray',
     image: '/assets/honors/patent-wifi-fresnel.jpg',
@@ -299,6 +321,22 @@ export const honors = [
     accent: 'gray',
     image: '/assets/honors/scholarship-third-2024.jpg',
     weight: 52
+  },
+  {
+    eyebrow: 'LANGUAGE CERTIFICATE',
+    title: 'CET-4 · 465 分',
+    desc: '全国大学英语四级考试 465 分（听力 128 / 阅读 171 / 写作与翻译 166），2023 年 12 月。',
+    accent: 'gray',
+    image: '/assets/honors/cet4-465.jpg',
+    weight: 45
+  },
+  {
+    eyebrow: 'LANGUAGE CERTIFICATE',
+    title: '普通话水平测试 · 二级乙等',
+    desc: '普通话水平测试 84.5 分，二级乙等（2026 年 3 月，浙江省教育考试院认定）。',
+    accent: 'gray',
+    image: '/assets/honors/mandarin-level2b.jpg',
+    weight: 42
   }
 ]
 
