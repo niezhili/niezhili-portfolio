@@ -28,7 +28,6 @@ const emit = defineEmits(['navigate'])
       </button>
     </nav>
 
-    <span class="rule bottom" />
   </aside>
 </template>
 
@@ -43,7 +42,7 @@ const emit = defineEmits(['navigate'])
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   pointer-events: none;
 }
 .rail > * { pointer-events: auto; }
@@ -68,13 +67,12 @@ const emit = defineEmits(['navigate'])
   height: 1px;
   background: rgba(255, 255, 255, 0.6);
 }
-.rule.bottom { margin-top: auto; }
 
-.rail-nav { display: flex; flex-direction: column; gap: 8px; }
+.rail-nav { display: flex; flex-direction: column; gap: 6px; }
 
 .rail-item {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
   border: none;
   background: transparent;
   border-radius: 12px;
@@ -90,9 +88,9 @@ const emit = defineEmits(['navigate'])
   box-shadow: 0 4px 12px rgba(31, 31, 89, 0.14);
 }
 .rail-item .nav-dot {
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
   box-shadow: none;
 }
 </style>
