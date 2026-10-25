@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue'
 import { siteData } from '../store/siteData.js'
+import { STAGE_PREVIEW } from '../lib/stageContext.js'
 
 // 个人资料窗（舞台内的头像页）：左右切换照片。
 // 逻辑沿用原 AvatarLightbox：只读 siteData.photoLibrary，不引入新的数据源。
@@ -24,7 +25,9 @@ function onKey(e) {
   if (e.key === 'ArrowLeft') { e.preventDefault(); prev() }
   else if (e.key === 'ArrowRight') { e.preventDefault(); next() }
 }
-onMounted(() => window.addEventListener('keydown', onKey))
+// 缩略图里只是画面，不接管键盘
+const preview = inject(STAGE_PREVIEW, false)
+onMounted(() => { if (!preview) window.addEventListener('keydown', onKey) })
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 defineExpose({ prev, next })

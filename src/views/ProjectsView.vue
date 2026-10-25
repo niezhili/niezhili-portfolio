@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, nextTick, inject, onMounted, onBeforeUnmount } from 'vue'
 import { siteData } from '../store/siteData.js'
+import { STAGE_PREVIEW } from '../lib/stageContext.js'
 import featImg from '../assets/feat-smart-mirror.png'
 
 // 按含金量降序（播种已排，这里兜底旧存档）
@@ -133,7 +134,11 @@ function onKey(e) {
   else if (e.key === 'End') { e.preventDefault(); stepTo(projects.length - 1) }
 }
 
+// 缩略图里只是画面：不挂键盘/滚轮，否则按一次方向键会被舞台与缩略图各响应一次
+const preview = inject(STAGE_PREVIEW, false)
+
 onMounted(() => {
+  if (preview) return
   window.addEventListener('keydown', onKey)
   scroller.value = rootEl.value?.closest('.page-scroll') || null
   // wheel 必须 non-passive 才能 preventDefault（接管滚动，改为步进）

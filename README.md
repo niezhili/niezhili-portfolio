@@ -21,8 +21,9 @@ npm run build    # production build into dist/
 ## Canvas behavior
 
 - Fixed `1280 × 800` canvas, auto-scaled to fit the browser window with `transform: scale()` (capped at 1.0 — never scales up).
-- Navigation imitates macOS Stage Manager: a fixed-order strip of window thumbnails on the left edge (avatar → education → projects → competitions → honors). The active page is pulled out of the strip and sits on the centre stage; leaving it slides the card back into its own slot.
-- Home acts as the desktop: sub-pages expand from their card and cover it, going back just reveals it in place. There is never an empty stage.
+- Navigation imitates macOS Stage Manager: a fixed-order strip of window thumbnails on the left edge (avatar → home → education → projects → competitions → honors). The active page is pulled out of the strip and sits on the centre stage; leaving it slides the card back into its own slot.
+- **Thumbnails are the real pages**, not mock bars: each card renders the actual view component at the main area's native `1104×768` and scales it down by `132/1104 ≈ 0.1196`. Thumbnails are `inert` + `pointer-events:none`, and `provide(STAGE_PREVIEW)` makes those page instances skip global keyboard/wheel listeners so one arrow key isn't handled twice.
+- Home has a card like every other page — it is the only way back to the home page (treating it as a borderless "desktop" left users stranded once they opened a sub-page).
 - Switching is a two-phase FLIP: 200ms shrink into the old page's slot → swap → 300ms expand from the clicked card (targets are always 132×92 cards or the 44×44 avatar slot, `sx`/`sy` are always non-uniform).
 - Top bar's `内容管理` blue pill opens the passcode modal; passcode `051014` auto-verifies on the 6th digit; `发布更新` returns to home.
 - **Data persistence**: all CMS edits are saved to `localStorage` (key `portfolio-cms-data-v4`); `SEED_REV` in `siteData.js` 控制一次性的增量播种（新增条目合并进旧存档，不覆盖用户上传的材料） and survive refresh; every view reads live from the store; `发布更新` stamps the `最近更新` date in the top bar; 恢复默认 resets to the `content.js` defaults.
@@ -35,9 +36,10 @@ src/
   App.vue                     # 页面外壳：画布自动缩放、舞台状态机（FLIP 切换）、组件编排
   data/content.js             # 全站文案数据的唯一来源（默认值）
   store/siteData.js           # 响应式数据仓库 + localStorage 持久化（v4）+ SEED_REV 增量播种
+  lib/stageContext.js         # STAGE_PREVIEW：缩略图内的页面实例跳过全局输入监听
   components/
-    StageStrip.vue            # 台前调度窗口条：44px 头像窗 + 132×92 页面卡（固定顺序、梯形透视、半透明、左下角图标）
-    TopBar.vue                # 顶栏：当前页标题、最近更新时间、内容管理入口
+    StageStrip.vue            # 台前调度窗口条：44px 头像窗 + 132×92 页面卡；卡内渲染真实页面并整体缩放（固定顺序、梯形透视、左下角图标）
+    TopBar.vue                # 顶栏：当前页标题、最近更新时间、内容管理入口（bare 模式供缩略图复用）
     PasscodeModal.vue         # 密码锁屏（420px）：6 位密码自动校验
     CMSWindow.vue             # 内容管理后台（1100×680）：schema 驱动编辑器 + 实时预览
   views/

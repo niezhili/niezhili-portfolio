@@ -37,6 +37,11 @@ const report = {}
 await page.goto(`${BASE}/?v=home`, { waitUntil: 'networkidle' })
 await sleep(600)
 report.stripOnHome = await keys()
+// 缩略图必须是真实页面：每张卡里都要有渲染后的页面根节点
+report.thumbs = await page.evaluate(() => {
+  const frames = [...document.querySelectorAll('.stage-strip .thumb-frame')]
+  return frames.map(f => ({ hasPage: !!f.querySelector('.page, .avatar-stage'), nodes: f.querySelectorAll('*').length }))
+})
 
 // 点击项目经历
 const card = await page.$('.stage-strip [data-key="proj"]')
@@ -92,6 +97,18 @@ report.stripOnAvatar = await keys()
 report.avatarShot = true
 await page.screenshot({ path: `${out}/avatar.png` })
 
+// 缩略图不接管键盘：在主页按方向键，项目缩略图里的展开行不应变化
+await page.goto(`${BASE}/?v=home`, { waitUntil: 'networkidle' })
+await sleep(700)
+const thumbOpenBefore = await page.$eval('.stage-strip [data-key="proj"] .row.open .row-title', el => el.textContent.trim()).catch(() => null)
+for (let i = 0; i < 3; i++) { await page.keyboard.press('ArrowDown'); await sleep(120) }
+const thumbOpenAfter = await page.$eval('.stage-strip [data-key="proj"] .row.open .row-title', el => el.textContent.trim()).catch(() => null)
+report.thumbKeyboardIsolated = thumbOpenBefore === thumbOpenAfter
+report.thumbOpenRow = { before: thumbOpenBefore, after: thumbOpenAfter }
+
+await page.goto(`${BASE}/?v=avatar`, { waitUntil: 'networkidle' })
+await sleep(600)
+
 // 左右切换
 const before = await page.$eval('.avatar-stage img', el => el.src)
 await page.keyboard.press('ArrowRight')
@@ -104,7 +121,7 @@ await page.keyboard.press('Escape')
 await sleep(700)
 report.afterEsc = await page.evaluate(() => ({
   hasAvatarStage: !!document.querySelector('.avatar-stage'),
-  title: document.querySelector('.page-title')?.textContent?.trim(),
+  title: document.querySelector('.main-area .page-title')?.textContent?.trim(),
   activeInStrip: [...document.querySelectorAll('.stage-strip [data-key]')].map(e => e.dataset.key)
 }))
 await page.screenshot({ path: `${out}/back-home.png` })
@@ -112,7 +129,7 @@ await page.screenshot({ path: `${out}/back-home.png` })
 // ---------- 4. 浮层未被捕获 ----------
 await page.goto(`${BASE}/?v=honor`, { waitUntil: 'networkidle' })
 await sleep(700)
-await page.click('.frame')
+await page.click('.main-area .frame')
 await sleep(400)
 report.lightbox = await page.$eval('.lightbox', el => {
   const b = el.getBoundingClientRect()

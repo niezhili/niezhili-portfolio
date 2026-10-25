@@ -1,9 +1,18 @@
 <script setup>
-import { ref, onBeforeUpdate, onUpdated, nextTick } from 'vue'
+import { ref, provide, onBeforeUpdate, onUpdated } from 'vue'
 import { navItems, profile } from '../data/content.js'
 import { siteData } from '../store/siteData.js'
+import { STAGE_PREVIEW } from '../lib/stageContext.js'
+import TopBar from './TopBar.vue'
+import HomeView from '../views/HomeView.vue'
+import EducationView from '../views/EducationView.vue'
+import ProjectsView from '../views/ProjectsView.vue'
+import CompetitionsView from '../views/CompetitionsView.vue'
+import HonorsView from '../views/HonorsView.vue'
 
-// 台前调度窗口条：头像窗（个人资料）+ 各页面窗
+// 台前调度窗口条：头像窗（个人资料）+ 五个页面窗
+// - 缩略图是**真实页面**：按主区原始尺寸 1104×768 布局，再整体缩到卡片大小
+//   （所以缩略图里的版式、玻璃层、图片位置都与舞台一致，只是小）
 // - 顺序固定（由 order 传入），当前页不在条中
 // - 卡片保持梯形透视、半透明、无描边，左下角挂一枚页面图标（对齐 macOS 观感）
 // - 槽位重排用手写 FLIP（祖先有 scale，TransitionGroup 会补偿错位）
@@ -16,18 +25,31 @@ const emit = defineEmits(['pick'])
 
 const root = ref(null)
 
+// 主区实际尺寸（App.vue 里 .main-area：1280-160-16 × 800-16-16）。
+// 卡片 132×92 与它同比例（1.4348 vs 1.4375），单轴缩放不会把画面压变形。
+const STAGE_W = 1104
+const STAGE_H = 768
+const CARD_W = 132 // = --stage-card-w，改令牌时这里要同步
+const frameStyle = {
+  width: STAGE_W + 'px',
+  height: STAGE_H + 'px',
+  transform: `scale(${CARD_W / STAGE_W})`
+}
+
+// 缩略图里的页面只当画面，不挂键盘/滚轮监听
+provide(STAGE_PREVIEW, true)
+
+const VIEWS = {
+  home: HomeView,
+  edu: EducationView,
+  proj: ProjectsView,
+  comp: CompetitionsView,
+  honor: HonorsView
+}
+
 const labelOf = key => key === 'avatar'
   ? '个人资料'
   : (navItems.find(n => n.key === key)?.label || key)
-
-// 每页的线框示意宽度（三条横条，模拟各自版式）
-const WIRE = {
-  edu:   [100, 72, 48],
-  proj:  [100, 86, 60],
-  comp:  [94, 94, 56],
-  honor: [78, 100, 66]
-}
-const wireOf = key => WIRE[key] || [96, 78, 54]
 
 // ---------- 槽位重排：前后对比 top 差值，用 WAAPI 补一段位移 ----------
 let prevTops = {}
@@ -72,31 +94,41 @@ defineExpose({ root })
 
 <template>
   <aside ref="root" class="stage-strip" :class="{ busy }">
-    <button
+    <div
       v-for="key in order"
       :key="key"
       class="slot"
       :class="[key === 'avatar' ? 'slot-avatar' : 'slot-win', { hidden: key === hiddenKey }]"
       :data-key="key"
-      type="button"
+      role="button"
+      tabindex="0"
       :aria-label="`打开${labelOf(key)}`"
+      :title="labelOf(key)"
       @click="pick(key)"
+      @keydown.enter.prevent="pick(key)"
+      @keydown.space.prevent="pick(key)"
     >
       <!-- 头像窗：44px 正圆，只有画面没有标题 -->
       <template v-if="key === 'avatar'">
         <img class="avatar-img" :src="siteData.avatar" :alt="profile.name" />
       </template>
 
-      <!-- 页面窗：页名 + 线框示意 + 左下角图标 -->
+      <!-- 页面窗：真实页面按 1104×768 渲染后缩到卡片大小；左下角图标 -->
       <template v-else>
-        <div class="win-head">
-          <span class="win-title">{{ labelOf(key) }}</span>
-        </div>
-        <div class="wire" aria-hidden="true">
-          <i v-for="(w, i) in wireOf(key)" :key="i" :style="{ width: w + '%' }" />
+        <div class="thumb" inert aria-hidden="true">
+          <div class="thumb-frame" :style="frameStyle">
+            <TopBar :title="labelOf(key)" bare />
+            <div class="thumb-body">
+              <component :is="VIEWS[key]" />
+            </div>
+          </div>
         </div>
         <span class="badge" aria-hidden="true">
-          <svg v-if="key === 'edu'" width="13" height="13" viewBox="0 0 24 24" fill="none">
+          <svg v-if="key === 'home'" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-9.5z"
+              stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+          <svg v-else-if="key === 'edu'" width="13" height="13" viewBox="0 0 24 24" fill="none">
             <path d="M3 9l9-4 9 4-9 4-9-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
             <path d="M7 11.5V16c0 1.5 2.2 2.5 5 2.5s5-1 5-2.5v-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
           </svg>
@@ -114,7 +146,7 @@ defineExpose({ root })
           </svg>
         </span>
       </template>
-    </button>
+    </div>
   </aside>
 </template>
 
@@ -137,20 +169,25 @@ defineExpose({ root })
   position: relative;
   padding: 0;
   border: none;
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(30px) saturate(140%);
-  -webkit-backdrop-filter: blur(30px) saturate(140%);
-  box-shadow: 0 14px 32px rgba(31, 31, 89, 0.2);
+  background: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  box-shadow: 0 10px 26px rgba(31, 31, 89, 0.22), 0 2px 6px rgba(31, 31, 89, 0.14);
   transform-origin: left center;
   transform: perspective(700px) rotateY(22deg);
   cursor: pointer;
-  opacity: 0.62;
-  transition: opacity 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+  opacity: 0.92;
+  transition: opacity 0.18s ease, box-shadow 0.18s ease;
 }
 .slot:hover {
   opacity: 1;
-  background: #fff;
   box-shadow: 0 18px 42px rgba(31, 31, 89, 0.26);
+}
+.slot:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--blue-500);
+  outline-offset: 2px;
 }
 /* 即将被替换的槽位：飞行中保持不可见，落地瞬间再出来 */
 .slot.hidden { opacity: 0 !important; }
@@ -160,7 +197,6 @@ defineExpose({ root })
   width: var(--stage-avatar);
   height: var(--stage-avatar);
   border-radius: 50%;
-  overflow: hidden;
 }
 .avatar-img {
   width: 100%;
@@ -175,36 +211,32 @@ defineExpose({ root })
   width: var(--stage-card-w);
   height: var(--stage-card-h);
   border-radius: var(--stage-radius);
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-.win-head { display: flex; align-items: center; }
-.win-title {
-  font-family: var(--font-display);
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--ink-2);
-  letter-spacing: 0.01em;
-  white-space: nowrap;
 }
 
-/* 线框示意：三条横条 */
-.wire {
-  margin-top: auto;
+/* 缩略图：真实页面按 1104×768 布局，再整体缩放到卡片大小 */
+.thumb {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.thumb-frame {
+  transform-origin: left top;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  padding-bottom: 2px;
+  gap: 22px;
+  padding: var(--pad-main);
+  box-sizing: border-box;
+  pointer-events: none;   /* 画面不可交互，点击落到卡片上 */
 }
-.wire i {
-  display: block;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(31, 31, 89, 0.14);
+/* 与 .page-scroll 同款内距，缩略图里版式才能与舞台逐像素对齐 */
+.thumb-body {
+  flex: 1;
+  overflow: hidden;
+  padding: 10px 14px 10px 10px;
+  margin: -10px -14px -10px -10px;
+  pointer-events: none;
 }
-.slot:hover .wire i { background: rgba(10, 132, 255, 0.2); }
 
 /* 左下角图标：略凸出窗口边缘 */
 .badge {

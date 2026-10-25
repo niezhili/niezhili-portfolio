@@ -31,10 +31,11 @@ const busy = computed(() => phase.value !== 'idle')
 const activeKey = computed(() => pendingKey.value ?? route.value)
 
 // 台前调度：左侧窗口条 + 中央舞台。
-// 顺序固定（头像 → 教育 → 项目 → 竞赛 → 荣誉），当前页从条中抽出、其余补位；
-// 主页 = 桌面，不占卡片位，子页覆盖它。
+// 顺序固定（头像 → 主页 → 教育 → 项目 → 竞赛 → 荣誉），当前页从条中抽出、其余补位。
+// 主页也占一张卡：它是「回首页」的唯一入口，之前把主页当桌面不占位，
+// 结果进了子页就没有回头路（用户实测反馈）。
 const stripOrder = computed(() =>
-  STAGE_KEYS.filter(k => k !== activeKey.value && k !== 'home')
+  STAGE_KEYS.filter(k => k !== activeKey.value)
 )
 
 const mainEl = ref(null)
@@ -107,7 +108,7 @@ async function switchTo(key) {
   pendingKey.value = key
   await nextTick()
   const outSlot = stripRef.value?.root?.querySelector(`[data-key="${outgoing}"]`)
-  const outRect = outgoing === 'home' ? null : (outSlot ? canvasRect(outSlot) : null)
+  const outRect = outSlot ? canvasRect(outSlot) : null
 
   el.style.willChange = 'transform'
 
@@ -129,7 +130,7 @@ async function switchTo(key) {
     el.style.borderRadius = `${end.radius}px`
     anim.cancel()
   } else {
-    // 离开桌面：不飞走，原地压暗后退，由新页盖上来
+    // 兜底：没量到旧页的槽位（极端情况），原地停顿，由新页盖上来
     await wait(140)
   }
 

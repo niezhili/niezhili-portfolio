@@ -1,6 +1,7 @@
 <script setup>
-import { ref, watch, onBeforeUnmount } from 'vue'
+import { ref, watch, inject, onBeforeUnmount } from 'vue'
 import { siteData } from '../store/siteData.js'
+import { STAGE_PREVIEW } from '../lib/stageContext.js'
 
 const honors = siteData.honors
 
@@ -15,8 +16,9 @@ function openZoom(h) { if (!isMissing(h)) zoomed.value = h }
 function closeZoom() { zoomed.value = null }
 
 function onKey(e) { if (e.key === 'Escape') closeZoom() }
+const preview = inject(STAGE_PREVIEW, false)
 watch(zoomed, v => {
-  if (v) window.addEventListener('keydown', onKey)
+  if (v && !preview) window.addEventListener('keydown', onKey)
   else window.removeEventListener('keydown', onKey)
 })
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))

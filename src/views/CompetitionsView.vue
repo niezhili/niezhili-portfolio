@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, inject, onMounted, onBeforeUnmount } from 'vue'
 import { siteData } from '../store/siteData.js'
+import { STAGE_PREVIEW } from '../lib/stageContext.js'
 
 const competitionStats = siteData.competitionStats
 const competitions = siteData.competitions
@@ -30,7 +31,9 @@ function closeViewer() {
 function onKey(e) {
   if (e.key === 'Escape') closeViewer()
 }
-onMounted(() => window.addEventListener('keydown', onKey))
+// 缩略图里只是画面，不接管键盘
+const preview = inject(STAGE_PREVIEW, false)
+onMounted(() => { if (!preview) window.addEventListener('keydown', onKey) })
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 

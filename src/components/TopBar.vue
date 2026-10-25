@@ -1,7 +1,8 @@
 <script setup>
 import { siteData } from '../store/siteData.js'
 
-defineProps({ title: String })
+// bare = 缩略图模式：只保留中间的页名与圆点，隐藏右侧按钮（避免小窗里出现五个黑药丸）
+defineProps({ title: String, bare: Boolean })
 const emit = defineEmits(['open-cms'])
 </script>
 
@@ -12,7 +13,7 @@ const emit = defineEmits(['open-cms'])
       <div class="page-title"><span class="dot" />{{ title }}</div>
     </div>
 
-    <div class="right">
+    <div v-if="!bare" class="right">
       <span class="updated">最近更新 · {{ siteData.lastPublishedAt }}</span>
       <button class="btn-primary" @click="emit('open-cms')">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
