@@ -80,6 +80,8 @@ const SLOW = import.meta.env.DEV ? Math.max(1, Math.min(8, Number(new URLSearchP
 let closingOverlays = false
 
 const DUR_OUT = 80
+const DUR_BACK = 220   // 旧窗口收回槽位的时间
+const GHOST_HOLD = 100 // 飞行窗在卡片位置停一下，留给旧窗口收回
 const DUR_IN = 400
 
 // 把元素矩形换算到「未缩放」的画布坐标（canvas-root 有 scale）
@@ -113,6 +115,7 @@ async function switchTo(key) {
   closingOverlays = false
 
   const main = canvasRect(mainEl.value)
+  const outgoing = route.value
   // 被点那张卡的位置：必须在条重排前量（重排后它就不在条里了）
   const cardEl = stripRef.value?.root?.querySelector(`[data-key="${key}"]`)
   const cardRect = cardEl ? canvasRect(cardEl) : null
@@ -122,14 +125,30 @@ async function switchTo(key) {
   incoming.value = key
   await nextTick()
 
-  // 旧窗口：80ms 内淡出。
-  // 为什么不「缩回槽位」：两层页面都是透明玻璃，只要重叠就会被看穿、糊成一片，
-  // 而新窗口是 ease-out（前段长得极快），旧页必须在它铺开之前就消失。
+  // 旧窗口：缩回它自己的槽位（mac 的「收回」动作），同时淡出。
+  // 两层页面都是透明玻璃，重叠会互相穿透，所以透明度在 60% 处就归零 ——
+  // 能看见「收回去」的过程，又不会糊成一片。
+  const oldSlot = stripRef.value?.root?.querySelector(`[data-key="${outgoing}"]`)
+  const oldRect = oldSlot ? canvasRect(oldSlot) : null
   if (mainEl.value) {
-    mainEl.value.animate(
-      [{ opacity: 1 }, { opacity: 0 }],
-      { duration: DUR_OUT * SLOW, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' }
-    )
+    if (oldRect) {
+      const to = frameTransform(oldRect, main)
+      mainEl.value.animate(
+        [
+          { transform: 'translate(0px, 0px) scale(1, 1)', borderRadius: '0px', opacity: 1 },
+          { transform: to.transform, borderRadius: `${to.radius}px`, opacity: 0.9, offset: 0.2 },
+          { transform: to.transform, borderRadius: `${to.radius}px`, opacity: 0, offset: 0.65 },
+          { transform: to.transform, borderRadius: `${to.radius}px`, opacity: 0 }
+        ],
+        { duration: DUR_BACK * SLOW, easing: 'cubic-bezier(.4, 0, 1, 1)', fill: 'forwards' }
+      )
+    } else {
+      mainEl.value.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: 200 * SLOW,
+        easing: 'cubic-bezier(.4, 0, 1, 1)',
+        fill: 'forwards'
+      })
+    }
   }
 
   // 新窗口：就是被点的那张卡，从卡片矩形长到满屏
@@ -137,16 +156,19 @@ async function switchTo(key) {
     const from = frameTransform(cardRect, main)
     // 头像窗的卡是正圆：起点用 50% 才会是圆（用 px 会被 44px 盒子限制成圆角方块）
     const startRadius = key === 'avatar' ? '50%' : `${from.radius}px`
+    const HOLD_AT = GHOST_HOLD / (DUR_IN + GHOST_HOLD)
+    // 前 16% 原地停一下：这段时间留给旧窗口「收回」，否则新窗一铺开就把它盖住了
     ghostEl.value.animate(
       [
-        { transform: from.transform, borderRadius: startRadius },
-        { transform: 'translate(0px, 0px) scale(1, 1)', borderRadius: '0px' }
+        { transform: from.transform, borderRadius: startRadius, offset: 0, easing: 'linear' },
+        { transform: from.transform, borderRadius: startRadius, offset: HOLD_AT, easing: 'cubic-bezier(.25, .46, .45, .94)' },
+        { transform: 'translate(0px, 0px) scale(1, 1)', borderRadius: '0px', offset: 1 }
       ],
-      { duration: DUR_IN * SLOW, easing: 'cubic-bezier(.25, .46, .45, .94)', fill: 'forwards' }
+      { duration: (DUR_IN + GHOST_HOLD) * SLOW, fill: 'forwards' }
     )
   }
 
-  await wait(DUR_IN * SLOW)
+  await wait((DUR_IN + GHOST_HOLD) * SLOW)
 
   // 同一帧内：撤掉旧舞台的动画残留 → 换页 → 移除飞出层，视觉上无缝衔接
   mainEl.value?.getAnimations().forEach(a => a.cancel())

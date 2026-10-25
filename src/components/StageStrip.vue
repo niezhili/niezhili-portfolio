@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide, onBeforeUpdate, onUpdated } from 'vue'
+import { ref, computed, watch, nextTick, provide } from 'vue'
 import { navItems, profile } from '../data/content.js'
 import { siteData } from '../store/siteData.js'
 import { STAGE_PREVIEW } from '../lib/stageContext.js'
@@ -29,31 +29,49 @@ const root = ref(null)
 const STAGE_W = 1104
 const STAGE_H = 768
 const CARD_W = 175 // = --stage-card-w，改令牌时这里要同步
-const CARD_H = 122 // = --stage-card-h
 const frameStyle = {
   width: STAGE_W + 'px',
   height: STAGE_H + 'px',
   transform: `scale(${CARD_W / STAGE_W})`
 }
 
-// ---------- 不规则四边形 ----------
-// rotateY 只能做出「上下边对称收敛」的等腰梯形；真实台前调度的窗口是斜着看的，
-// 上边下压得多、下边收得少，四条边都不平行 —— 那是一个任意四边形。
-// 任意四边形用 4 点单应矩阵（matrix3d）表达：把卡片矩形映射到目标四点。
-const QUAD = {
-  w: 99,        // 视觉宽度
-  h: 119,       // 左缘高度（近边，最高）
-  topDrop: 38,  // 右上角相对左上角下压多少（上边的斜率，明显大于下边）
-  riseBtm: 6,   // 右下角相对左下角上收多少（下边的斜率，几乎持平）
-  skew: 3       // 左右两边的横向倾斜：让竖边也不平行
+// ---------- 窗口条几何：所有卡片朝同一个灭点收拢 ----------
+// 截图里最上面那张的「上边」往下压、最下面那张的「下边」往上抬，说明它们共享一个
+// 灭点（竖直方向位于条的中心）。所以每张卡的四角由它的**槽位**决定：
+//   左缘不动（最近），右缘按 TAPER 缩向灭点；右缘中点 = 灭点 + (左缘中点 - 灭点) * TAPER
+// 这样整列窗就像贴在一个朝右后方退去的平面上。
+const AVATAR_H = 44
+const CARD_H = 122
+const GAP = 12
+const VPY = 400      // 画布竖直中心（= 灭点高度）
+const VIS_W = 99     // 视觉宽度（透视后）
+const TAPER = 0.88   // 右缘 / 左缘（0.84 时倾斜偏大，按手绘边界收到 0.88）
+
+// 每个槽位的 canvas y（条本身垂直居中）
+function slotTops(order) {
+  const hs = order.map(k => (k === 'avatar' ? AVATAR_H : CARD_H))
+  const total = hs.reduce((a, b) => a + b, 0) + GAP * Math.max(0, order.length - 1)
+  let y = VPY - total / 2
+  const out = {}
+  order.forEach((k, i) => {
+    out[k] = y
+    y += hs[i] + GAP
+  })
+  return out
 }
-// 左上 / 右上 / 右下 / 左下
-const quadPoints = [
-  [0, 0],
-  [QUAD.w, QUAD.topDrop],
-  [QUAD.w - QUAD.skew, QUAD.topDrop + (QUAD.h - QUAD.topDrop - QUAD.riseBtm)],
-  [QUAD.skew, QUAD.h]
-]
+
+// 某个槽位上的卡片四角（相对卡片左上角）
+function quadFor(top) {
+  const cL = top + CARD_H / 2
+  const cR = VPY + (cL - VPY) * TAPER
+  const hR = CARD_H * TAPER
+  return [
+    [0, 0],
+    [VIS_W, cR - hR / 2 - top],
+    [VIS_W, cR + hR / 2 - top],
+    [0, CARD_H]
+  ]
+}
 
 // 把 w×h 的矩形映射到任意四边形（四点单应），返回 matrix3d
 function quadMatrix(w, h, [p0, p1, p2, p3]) {
@@ -84,7 +102,15 @@ function quadMatrix(w, h, [p0, p1, p2, p3]) {
   return `matrix3d(${A},${D},0,${G}, ${B},${E},0,${H}, 0,0,1,0, ${C},${F},0,1)`
 }
 
-const slotTransform = quadMatrix(CARD_W, CARD_H, quadPoints)
+const quads = computed(() => {
+  const tops = slotTops(props.order)
+  const out = {}
+  for (const key of props.order) {
+    if (key === 'avatar') continue
+    out[key] = quadMatrix(CARD_W, CARD_H, quadFor(tops[key]))
+  }
+  return out
+})
 
 // 缩略图里的页面只当画面，不挂键盘/滚轮监听
 provide(STAGE_PREVIEW, true)
@@ -101,42 +127,35 @@ const labelOf = key => key === 'avatar'
   ? '个人资料'
   : (navItems.find(n => n.key === key)?.label || key)
 
-// ---------- 槽位重排：前后对比 top 差值，用 WAAPI 补一段位移 ----------
-let prevTops = {}
-function tops() {
-  const m = {}
-  if (!root.value) return m
-  root.value.querySelectorAll('[data-key]').forEach(el => {
-    m[el.dataset.key] = el.getBoundingClientRect().top
+// ---------- 槽位重排：旧的槽位 → 新的槽位 ----------
+// 卡片移动时四边形本身也会变（越靠近灭点越扁），所以关键帧里要从「旧四边形」补到「新四边形」。
+const REFLOW_MS = 420
+const REFLOW_EASE = 'cubic-bezier(.32,.72,0,1)'
+
+async function reflow(prevOrder) {
+  const before = slotTops(prevOrder)
+  const beforeQuads = {}
+  for (const k of prevOrder) if (k !== 'avatar') beforeQuads[k] = quadFor(before[k])
+  await nextTick()
+  const after = slotTops(props.order)
+  root.value?.querySelectorAll('[data-key]').forEach(el => {
+    const key = el.dataset.key
+    if (before[key] == null) return
+    const dy = before[key] - after[key]
+    if (Math.abs(dy) < 0.5) return
+    const to = key === 'avatar' ? 'translateY(0px)' : quads.value[key]
+    const from = key === 'avatar'
+      ? `translateY(${dy}px)`
+      : `translateY(${dy}px) ${quadMatrix(CARD_W, CARD_H, beforeQuads[key])}`
+    el.animate([{ transform: from }, { transform: to }], {
+      duration: REFLOW_MS,
+      easing: REFLOW_EASE
+    })
   })
-  return m
-}
-// canvas 可能被缩放，位移量要换算回未缩放坐标
-function canvasScale() {
-  const c = document.querySelector('.canvas-root')
-  if (!c) return 1
-  return c.getBoundingClientRect().width / 1280 || 1
 }
 
-onBeforeUpdate(() => { prevTops = tops() })
-onUpdated(() => {
-  if (!root.value) return
-  const k = canvasScale()
-  root.value.querySelectorAll('[data-key]').forEach(el => {
-    const before = prevTops[el.dataset.key]
-    if (before == null) return
-    const delta = (before - el.getBoundingClientRect().top) / k
-    if (Math.abs(delta) < 1) return
-    // 关键帧必须带上卡片自己的四边形矩阵，否则补位动画期间卡片会被拍平
-    const base = el.dataset.key === 'avatar' ? '' : slotTransform
-    el.animate(
-      [
-        { transform: `translateY(${delta}px) ${base}`.trim() },
-        { transform: `translateY(0px) ${base}`.trim() }
-      ],
-      { duration: 260, easing: 'cubic-bezier(.32,.72,0,1)' }
-    )
-  })
+watch(() => props.order.slice(), (next, prev) => {
+  if (prev && prev.length) reflow(prev)
 })
 
 function pick(key) {
@@ -155,7 +174,7 @@ defineExpose({ root })
       class="slot"
       :class="[key === 'avatar' ? 'slot-avatar' : 'slot-win', { hidden: key === hiddenKey }]"
       :data-key="key"
-      :style="key === 'avatar' ? null : { transform: slotTransform }"
+      :style="key === 'avatar' ? null : { transform: quads[key] }"
       role="button"
       tabindex="0"
       :aria-label="`打开${labelOf(key)}`"
