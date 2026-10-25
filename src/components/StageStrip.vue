@@ -29,7 +29,7 @@ const root = ref(null)
 // 卡片 132×92 与它同比例（1.4348 vs 1.4375），单轴缩放不会把画面压变形。
 const STAGE_W = 1104
 const STAGE_H = 768
-const CARD_W = 165 // = --stage-card-w，改令牌时这里要同步
+const CARD_W = 175 // = --stage-card-w，改令牌时这里要同步
 const frameStyle = {
   width: STAGE_W + 'px',
   height: STAGE_H + 'px',
@@ -175,7 +175,7 @@ defineExpose({ root })
   -webkit-backdrop-filter: blur(10px) saturate(120%);
   box-shadow: 0 10px 26px rgba(31, 31, 89, 0.22), 0 2px 6px rgba(31, 31, 89, 0.14);
   transform-origin: left center;
-  transform: perspective(420px) rotateY(42deg);
+  transform: perspective(94px) rotateY(20deg);
   cursor: pointer;
   opacity: 0.92;
   transition: opacity 0.18s ease, box-shadow 0.18s ease;

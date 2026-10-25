@@ -64,12 +64,12 @@
   --canvas-h: 800px;
 
   /* Stage Manager — 左侧窗口条与舞台切换 */
-  --stage-card-w: 165px;
-  --stage-card-h: 115px;  /* 165/115 = 1.4348 ≈ 主区 1104/768 = 1.4375，FLIP 才不畸变 */
-                          /* 布局宽 165 但 42° 透视后视觉宽只有 ~110，右侧留给主区 */
+  --stage-card-w: 175px;
+  --stage-card-h: 122px;  /* 175/122 = 1.4344 ≈ 主区 1104/768 = 1.4375，FLIP 才不畸变 */
+                          /* 布局宽 175，透视后视觉只有 ~99×119（右缘 73）= 明显梯形 */
   --stage-avatar: 44px;
-  --stage-gap: 16px;
-  --stage-radius: 14px;
+  --stage-gap: 12px;
+  --stage-radius: 9px;
   --dur-stage-out: 200ms;
   --dur-stage-in: 300ms;
   --ease-stage-out: cubic-bezier(0.4, 0, 1, 1);
