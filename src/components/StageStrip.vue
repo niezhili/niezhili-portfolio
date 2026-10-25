@@ -26,15 +26,65 @@ const emit = defineEmits(['pick'])
 const root = ref(null)
 
 // 主区实际尺寸（App.vue 里 .main-area：1280-160-16 × 800-16-16）。
-// 卡片 132×92 与它同比例（1.4348 vs 1.4375），单轴缩放不会把画面压变形。
 const STAGE_W = 1104
 const STAGE_H = 768
 const CARD_W = 175 // = --stage-card-w，改令牌时这里要同步
+const CARD_H = 122 // = --stage-card-h
 const frameStyle = {
   width: STAGE_W + 'px',
   height: STAGE_H + 'px',
   transform: `scale(${CARD_W / STAGE_W})`
 }
+
+// ---------- 不规则四边形 ----------
+// rotateY 只能做出「上下边对称收敛」的等腰梯形；真实台前调度的窗口是斜着看的，
+// 上边下压得多、下边收得少，四条边都不平行 —— 那是一个任意四边形。
+// 任意四边形用 4 点单应矩阵（matrix3d）表达：把卡片矩形映射到目标四点。
+const QUAD = {
+  w: 99,        // 视觉宽度
+  h: 119,       // 左缘高度（近边，最高）
+  topDrop: 38,  // 右上角相对左上角下压多少（上边的斜率，明显大于下边）
+  riseBtm: 6,   // 右下角相对左下角上收多少（下边的斜率，几乎持平）
+  skew: 3       // 左右两边的横向倾斜：让竖边也不平行
+}
+// 左上 / 右上 / 右下 / 左下
+const quadPoints = [
+  [0, 0],
+  [QUAD.w, QUAD.topDrop],
+  [QUAD.w - QUAD.skew, QUAD.topDrop + (QUAD.h - QUAD.topDrop - QUAD.riseBtm)],
+  [QUAD.skew, QUAD.h]
+]
+
+// 把 w×h 的矩形映射到任意四边形（四点单应），返回 matrix3d
+function quadMatrix(w, h, [p0, p1, p2, p3]) {
+  const [x0, y0] = p0, [x1, y1] = p1, [x2, y2] = p2, [x3, y3] = p3
+  const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3
+  const dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3
+  let a, b, c, d, e, f, g, k
+  if (Math.abs(dx3) < 1e-9 && Math.abs(dy3) < 1e-9) {
+    // 仿射退化（四边形其实是平行四边形）
+    a = x1 - x0; b = x2 - x1; c = x0
+    d = y1 - y0; e = y2 - y1; f = y0
+    g = 0; k = 0
+  } else {
+    const det = dx1 * dy2 - dx2 * dy1
+    g = (dx3 * dy2 - dx2 * dy3) / det
+    k = (dx1 * dy3 - dx3 * dy1) / det
+    a = x1 - x0 + g * x1
+    b = x3 - x0 + k * x3
+    c = x0
+    d = y1 - y0 + g * y1
+    e = y3 - y0 + k * y3
+    f = y0
+  }
+  // 源坐标是 w×h，所以把单应里的小数系数按比例还原
+  const A = a / w, B = b / h, C = c
+  const D = d / w, E = e / h, F = f
+  const G = g / w, H = k / h
+  return `matrix3d(${A},${D},0,${G}, ${B},${E},0,${H}, 0,0,1,0, ${C},${F},0,1)`
+}
+
+const slotTransform = quadMatrix(CARD_W, CARD_H, quadPoints)
 
 // 缩略图里的页面只当画面，不挂键盘/滚轮监听
 provide(STAGE_PREVIEW, true)
@@ -77,8 +127,13 @@ onUpdated(() => {
     if (before == null) return
     const delta = (before - el.getBoundingClientRect().top) / k
     if (Math.abs(delta) < 1) return
+    // 关键帧必须带上卡片自己的四边形矩阵，否则补位动画期间卡片会被拍平
+    const base = el.dataset.key === 'avatar' ? '' : slotTransform
     el.animate(
-      [{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0px)' }],
+      [
+        { transform: `translateY(${delta}px) ${base}`.trim() },
+        { transform: `translateY(0px) ${base}`.trim() }
+      ],
       { duration: 260, easing: 'cubic-bezier(.32,.72,0,1)' }
     )
   })
@@ -100,6 +155,7 @@ defineExpose({ root })
       class="slot"
       :class="[key === 'avatar' ? 'slot-avatar' : 'slot-win', { hidden: key === hiddenKey }]"
       :data-key="key"
+      :style="key === 'avatar' ? null : { transform: slotTransform }"
       role="button"
       tabindex="0"
       :aria-label="`打开${labelOf(key)}`"
@@ -174,8 +230,7 @@ defineExpose({ root })
   backdrop-filter: blur(10px) saturate(120%);
   -webkit-backdrop-filter: blur(10px) saturate(120%);
   box-shadow: 0 10px 26px rgba(31, 31, 89, 0.22), 0 2px 6px rgba(31, 31, 89, 0.14);
-  transform-origin: left center;
-  transform: perspective(94px) rotateY(20deg);
+  transform-origin: 0 0;
   cursor: pointer;
   opacity: 0.92;
   transition: opacity 0.18s ease, box-shadow 0.18s ease;

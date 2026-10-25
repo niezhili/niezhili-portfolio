@@ -25,7 +25,8 @@ npm run build    # production build into dist/
 - **Thumbnails are the real pages**, not mock bars: each card renders the actual view component at the main area's native `1104×768` and scales it down by `132/1104 ≈ 0.1196`. Thumbnails are `inert` + `pointer-events:none`, and `provide(STAGE_PREVIEW)` makes those page instances skip global keyboard/wheel listeners so one arrow key isn't handled twice.
 - Home has a card like every other page — it is the only way back to the home page (treating it as a borderless "desktop" left users stranded once they opened a sub-page).
 - Switching: the clicked card itself flies out. A "flight layer" renders the target page and animates from the card's measured rect to full stage in 400ms, while the old page fades out in 80ms (two translucent pages overlapping would bleed through each other). On landing, the route is swapped and the flight layer removed in the same frame, so it is seamless.
-- Cards are 175×122 laid out, but `perspective(94px) rotateY(20deg)` projects them to ~99×119 with the right edge at ~0.61 of the left — a real Stage-Manager trapezoid (top and bottom edges converge toward a vanishing point). A small angle with a very close perspective is wider than a big angle with a far one, at the same taper. FLIP always measures the real bounding box, and the avatar target starts at `border-radius: 50%` so the circle isn't clamped into a rounded square.
+- Cards are 175×122 in layout but mapped onto an **arbitrary quadrilateral** with a 4-point homography (`quadMatrix()` → `matrix3d`, `transform-origin: 0 0`). `rotateY` can only produce a symmetric trapezoid (left/right edges stay parallel); Stage Manager shows the window at an angle, where the top edge drops far more than the bottom edge lifts and the vertical edges are not parallel either. Target corners: `(0,0) (99,38) (96,111) (3,119)`.
+- The strip's reflow animation must repeat that matrix in its keyframes, otherwise the cards flatten into rectangles mid-animation. The avatar card is never warped (stays a circle). FLIP still measures the real bounding box, and the avatar target starts at `border-radius: 50%` so the circle isn't clamped into a rounded square.
 - Top bar's `内容管理` blue pill opens the passcode modal; passcode `051014` auto-verifies on the 6th digit; `发布更新` returns to home.
 - **Data persistence**: all CMS edits are saved to `localStorage` (key `portfolio-cms-data-v4`); `SEED_REV` in `siteData.js` 控制一次性的增量播种（新增条目合并进旧存档，不覆盖用户上传的材料） and survive refresh; every view reads live from the store; `发布更新` stamps the `最近更新` date in the top bar; 恢复默认 resets to the `content.js` defaults.
 
@@ -39,7 +40,7 @@ src/
   store/siteData.js           # 响应式数据仓库 + localStorage 持久化（v4）+ SEED_REV 增量播种
   lib/stageContext.js         # STAGE_PREVIEW：缩略图内的页面实例跳过全局输入监听
   components/
-    StageStrip.vue            # 台前调度窗口条：44px 头像窗 + 175×122 页面卡（透视后 ~99px）；卡内渲染真实页面并整体缩放（固定顺序、梯形透视、左下角图标）
+    StageStrip.vue            # 台前调度窗口条：44px 头像窗 + 175×122 页面卡（四点单应映射成不规则四边形）；卡内渲染真实页面并整体缩放（固定顺序、左下角图标）
     TopBar.vue                # 顶栏：当前页标题、最近更新时间、内容管理入口（bare 模式供缩略图复用）
     PasscodeModal.vue         # 密码锁屏（420px）：6 位密码自动校验
     CMSWindow.vue             # 内容管理后台（1100×680）：schema 驱动编辑器 + 实时预览
