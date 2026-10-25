@@ -13,6 +13,15 @@ import CompetitionsView from './views/CompetitionsView.vue'
 import HonorsView from './views/HonorsView.vue'
 import AvatarView from './views/AvatarView.vue'
 
+const VIEWS = {
+  home: HomeView,
+  edu: EducationView,
+  proj: ProjectsView,
+  comp: CompetitionsView,
+  honor: HonorsView,
+  avatar: AvatarView
+}
+
 const STAGE_KEYS = ['avatar', ...navItems.map(n => n.key)]
 
 // 支持 ?v=proj 之类深链，方便直接分享到某一页
@@ -26,19 +35,20 @@ function initialRoute() {
 
 const route = ref(initialRoute())
 const pendingKey = ref(null)
-const phase = ref('idle')            // idle | out | in
-const busy = computed(() => phase.value !== 'idle')
+// 正在从卡片飞出来的那一页（渲染在舞台之上，落位后与舞台换手）
+const incoming = ref(null)
+const busy = computed(() => !!incoming.value)
 const activeKey = computed(() => pendingKey.value ?? route.value)
 
 // 台前调度：左侧窗口条 + 中央舞台。
 // 顺序固定（头像 → 主页 → 教育 → 项目 → 竞赛 → 荣誉），当前页从条中抽出、其余补位。
-// 主页也占一张卡：它是「回首页」的唯一入口，之前把主页当桌面不占位，
-// 结果进了子页就没有回头路（用户实测反馈）。
+// 主页也占一张卡：它是「回首页」的唯一入口。
 const stripOrder = computed(() =>
   STAGE_KEYS.filter(k => k !== activeKey.value)
 )
 
 const mainEl = ref(null)
+const ghostEl = ref(null)
 const stripRef = ref(null)
 
 const showPasscode = ref(false)
@@ -62,12 +72,15 @@ function computeScale() {
   }
 }
 
-// ---------- FLIP：窗口在舞台与条之间飞行 ----------
+// ---------- 窗口飞行 ----------
 const wait = ms => new Promise(r => setTimeout(r, ms))
 // 开发调试：?slowstage=4 把切换动画放慢 4 倍，便于逐帧检查（生产忽略）
 const SLOW = import.meta.env.DEV ? Math.max(1, Math.min(8, Number(new URLSearchParams(location.search).get('slowstage') || 1))) : 1
 // 切换前会用 Escape 广播关掉页内浮层；这个标志防止该广播反过来触发「Esc 回桌面」
 let closingOverlays = false
+
+const DUR_OUT = 80
+const DUR_IN = 400
 
 // 把元素矩形换算到「未缩放」的画布坐标（canvas-root 有 scale）
 function canvasRect(el) {
@@ -79,12 +92,14 @@ function canvasRect(el) {
   return { x: (r.left - rb.left) / s, y: (r.top - rb.top) / s, w: r.width / s, h: r.height / s }
 }
 
+// 目标矩形 → 舞台的 transform（transform-origin: 0 0，左上角对齐）
 function frameTransform(from, main) {
   const sx = from.w / main.w
   const sy = from.h / main.h
   return {
     transform: `translate(${from.x - main.x}px, ${from.y - main.y}px) scale(${sx}, ${sy})`,
-    radius: Math.min(120, 14 / Math.max(Math.min(sx, sy), 0.04))
+    // 圆角在元素坐标系里放大，视觉上才等于卡片的 14px
+    radius: Math.min(600, 14 / Math.max(Math.min(sx, sy), 0.01))
   }
 }
 
@@ -97,70 +112,48 @@ async function switchTo(key) {
   await nextTick()
   closingOverlays = false
 
-  const el = mainEl.value
-  const main = canvasRect(el)
-  const outgoing = route.value
-  // 目标卡片的位置必须在条重排之前量（重排后它就不在条里了）
-  const inSlot = stripRef.value?.root?.querySelector(`[data-key="${key}"]`)
-  const inRect = inSlot ? canvasRect(inSlot) : null
+  const main = canvasRect(mainEl.value)
+  // 被点那张卡的位置：必须在条重排前量（重排后它就不在条里了）
+  const cardEl = stripRef.value?.root?.querySelector(`[data-key="${key}"]`)
+  const cardRect = cardEl ? canvasRect(cardEl) : null
 
-  // 条先重排：旧页插回它的槽位，当前页被抽出
+  // 条立刻重排：被点的卡片「飞出去」，旧页的卡片滑回自己的槽位
   pendingKey.value = key
+  incoming.value = key
   await nextTick()
-  const outSlot = stripRef.value?.root?.querySelector(`[data-key="${outgoing}"]`)
-  const outRect = outSlot ? canvasRect(outSlot) : null
 
-  el.style.willChange = 'transform'
-
-  // ---------- 离场 ----------
-  phase.value = 'out'
-  if (outRect) {
-    const end = frameTransform(outRect, main)
-    const anim = el.animate(
-      [
-        { transform: 'translate(0px, 0px) scale(1, 1)', borderRadius: '0px' },
-        { transform: end.transform, borderRadius: `${end.radius}px` }
-      ],
-      { duration: 200 * SLOW, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' }
+  // 旧窗口：80ms 内淡出。
+  // 为什么不「缩回槽位」：两层页面都是透明玻璃，只要重叠就会被看穿、糊成一片，
+  // 而新窗口是 ease-out（前段长得极快），旧页必须在它铺开之前就消失。
+  if (mainEl.value) {
+    mainEl.value.animate(
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: DUR_OUT * SLOW, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' }
     )
-    // 用定时器而不是 anim.finished：某些环境里该 Promise 会提前决议，导致离场被跳过
-    await wait(200 * SLOW)
-    // 先写内联终态，再 cancel —— 顺序反了会闪回全尺寸
-    el.style.transform = end.transform
-    el.style.borderRadius = `${end.radius}px`
-    anim.cancel()
-  } else {
-    // 兜底：没量到旧页的槽位（极端情况），原地停顿，由新页盖上来
-    await wait(140)
   }
 
-  // ---------- 提交 ----------
+  // 新窗口：就是被点的那张卡，从卡片矩形长到满屏
+  if (ghostEl.value && cardRect) {
+    const from = frameTransform(cardRect, main)
+    // 头像窗的卡是正圆：起点用 50% 才会是圆（用 px 会被 44px 盒子限制成圆角方块）
+    const startRadius = key === 'avatar' ? '50%' : `${from.radius}px`
+    ghostEl.value.animate(
+      [
+        { transform: from.transform, borderRadius: startRadius },
+        { transform: 'translate(0px, 0px) scale(1, 1)', borderRadius: '0px' }
+      ],
+      { duration: DUR_IN * SLOW, easing: 'cubic-bezier(.25, .46, .45, .94)', fill: 'forwards' }
+    )
+  }
+
+  await wait(DUR_IN * SLOW)
+
+  // 同一帧内：撤掉旧舞台的动画残留 → 换页 → 移除飞出层，视觉上无缝衔接
+  mainEl.value?.getAnimations().forEach(a => a.cancel())
   route.value = key
   pendingKey.value = null
+  incoming.value = null
   await nextTick()
-
-  // ---------- 入场 ----------
-  phase.value = 'in'
-  let start = { transform: 'translate(0px, 0px) scale(.985, .985)', radius: 0 }
-  if (inRect) start = frameTransform(inRect, main)
-  el.style.transform = start.transform
-  el.style.borderRadius = `${start.radius}px`
-
-  const anim = el.animate(
-    [
-      { transform: start.transform, borderRadius: `${start.radius}px` },
-      { transform: 'translate(0px, 0px) scale(1, 1)', borderRadius: '0px' }
-    ],
-    { duration: 300 * SLOW, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' }
-  )
-  await wait(300 * SLOW)
-  anim.cancel()
-
-  // ---------- 收尾：必须清干净，will-change 也会让 fixed 后代被捕获 ----------
-  el.style.transform = ''
-  el.style.borderRadius = ''
-  el.style.willChange = ''
-  phase.value = 'idle'
 
   try {
     const url = new URL(location.href)
@@ -197,11 +190,12 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', onStageKey)
 })
 
-// current page title (e.g. 项目经历) — shown centered in the top bar
-const currentTitle = computed(() => {
-  if (route.value === 'avatar') return '个人资料'
-  return navItems.find(n => n.key === route.value)?.label || ''
-})
+// 当前页标题（顶栏居中显示）
+function titleOf(key) {
+  if (key === 'avatar') return '个人资料'
+  return navItems.find(n => n.key === key)?.label || ''
+}
+const currentTitle = computed(() => titleOf(route.value))
 
 function openCMS() {
   if (isSessionUnlocked()) {
@@ -227,38 +221,29 @@ function onPublish() {
   <div ref="stageEl" class="canvas-stage">
     <div
       class="canvas-root"
-      :class="{ 'stage-busy': busy, 'stage-out': phase === 'out', 'stage-in': phase === 'in' }"
-      :style="{
-        transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-        '--veil-delay': `${140 * SLOW}ms`,
-        '--veil-dur': `${60 * SLOW}ms`,
-        '--veil-in-delay': `${60 * SLOW}ms`,
-        '--veil-in-dur': `${220 * SLOW}ms`
-      }"
+      :style="{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})` }"
     >
       <!-- 台前调度窗口条：头像窗 + 各页面窗，点击即把该窗口送到舞台 -->
       <StageStrip
         ref="stripRef"
         :order="stripOrder"
-        :hidden-key="phase === 'out' ? route : null"
         :busy="busy"
         @pick="switchTo"
       />
 
       <!-- 舞台 -->
       <div ref="mainEl" class="main-area" :inert="busy">
-        <TopBar
-          :title="currentTitle"
-          @open-cms="openCMS"
-        />
-
+        <TopBar :title="currentTitle" @open-cms="openCMS" />
         <div class="page-scroll">
-          <HomeView         v-if="route === 'home'"   @open-cms="openCMS" />
-          <EducationView    v-else-if="route === 'edu'" />
-          <ProjectsView     v-else-if="route === 'proj'" />
-          <CompetitionsView v-else-if="route === 'comp'" />
-          <HonorsView       v-else-if="route === 'honor'" />
-          <AvatarView       v-else-if="route === 'avatar'" />
+          <component :is="VIEWS[route]" v-on="route === 'home' ? { 'open-cms': openCMS } : {}" />
+        </div>
+      </div>
+
+      <!-- 飞出的窗口：起步就是被点那张卡的位置与大小，长到满屏后与舞台换手 -->
+      <div v-if="incoming" ref="ghostEl" class="main-area main-ghost" inert>
+        <TopBar :title="titleOf(incoming)" />
+        <div class="page-scroll">
+          <component :is="VIEWS[incoming]" v-on="incoming === 'home' ? { 'open-cms': openCMS } : {}" />
         </div>
       </div>
 
@@ -296,29 +281,15 @@ function onPublish() {
   padding: var(--pad-main);
   gap: 22px;
   overflow: hidden;
+  /* 飞行动画按左上角换算矩形，必须显式 0 0；
+     默认 center 会让落点整体偏掉半个宽度 */
+  transform-origin: 0 0;
 }
-/* 飞行期间舞台要盖在窗口条之上（条是 45） */
-.stage-busy .main-area { z-index: 46; }
 
-/* 白色窗口面：内容是可见的，先让窗口带着内容缩小 120ms，再被白面盖住，
-   提交瞬间用不透明的白面藏住换页，最后在放大过程中揭开新页 */
-.main-area::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: #fff;
-  opacity: 0;
+/* 飞出的窗口：盖在条（45）之上，落位时正好与舞台重合 */
+.main-ghost {
+  z-index: 46;
   pointer-events: none;
-  transition: opacity 200ms linear;
-}
-.stage-out .main-area::after {
-  opacity: 1;
-  transition: opacity var(--veil-dur, 60ms) linear var(--veil-delay, 140ms);
-}
-.stage-in .main-area::after {
-  opacity: 0;
-  transition: opacity var(--veil-in-dur, 220ms) linear var(--veil-in-delay, 60ms);
 }
 
 .page-scroll {
@@ -335,8 +306,4 @@ function onPublish() {
 /* Modal transitions */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.22s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
-
-@media (prefers-reduced-motion: reduce) {
-  .main-area::after { transition-duration: 0ms !important; transition-delay: 0ms !important; }
-}
 </style>

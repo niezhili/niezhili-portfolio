@@ -65,30 +65,58 @@ report.mainAfter = await page.$eval('.main-area', el => {
   return { transform: cs.transform, willChange: cs.willChange, radius: cs.borderRadius }
 })
 
-// ---------- 2. FLIP 落点校验（重新点一次，读取提交瞬间的内联 transform） ----------
+// ---------- 2. 飞行窗口的起点必须等于被点卡片的矩形 ----------
 await page.goto(`${BASE}/?v=home`, { waitUntil: 'networkidle' })
 await sleep(500)
 const res = await page.evaluate(async () => {
   const wait = ms => new Promise(r => setTimeout(r, ms))
   const canvas = document.querySelector('.canvas-root')
   const scale = canvas.getBoundingClientRect().width / 1280
-  const target = document.querySelector('.stage-strip [data-key="proj"]')
-  const slot = target.getBoundingClientRect()
-  const main = document.querySelector('.main-area').getBoundingClientRect()
-  target.click()
-  // 提交发生在离场动画结束后（200ms + 少量抖动）
-  let found = null
-  for (let i = 0; i < 60; i++) {
-    await wait(16)
-    const t = document.querySelector('.main-area').style.transform
-    if (t && /scale\(([\d.]+)/.test(t)) {
-      const m = t.match(/translate\(([-\d.]+)px, ?([-\d.]+)px\) scale\(([\d.]+), ?([\d.]+)\)/)
-      if (m) { found = { t, tx: +m[1], ty: +m[2], sx: +m[3], sy: +m[4] }; break }
+  const card = document.querySelector('.stage-strip [data-key="proj"]')
+  const cardBox = card.getBoundingClientRect()
+  const mainBox = document.querySelector('.main-area').getBoundingClientRect()
+  card.click()
+  let kf = null
+  for (let i = 0; i < 40 && !kf; i++) {
+    await wait(8)
+    const g = document.querySelector('.main-ghost')
+    if (g) {
+      const a = g.getAnimations()[0]
+      kf = a ? a.effect.getKeyframes()[0].transform : null
     }
   }
-  return { found, scale, slot: { x: slot.x, y: slot.y, w: slot.width, h: slot.height }, main: { x: main.x, y: main.y, w: main.width, h: main.height } }
+  const m = kf && kf.match(/translate\(([-\d.]+)px, ?([-\d.]+)px\) scale\(([\d.]+), ?([\d.]+)\)/)
+  return {
+    keyframe: kf,
+    got: m ? { tx: +m[1], ty: +m[2], sx: +m[3], sy: +m[4] } : null,
+    want: {
+      tx: +((cardBox.x - mainBox.x) / scale).toFixed(1),
+      ty: +((cardBox.y - mainBox.y) / scale).toFixed(1),
+      sx: +((cardBox.width / mainBox.width)).toFixed(3),
+      sy: +((cardBox.height / mainBox.height)).toFixed(3)
+    }
+  }
 })
-report.flip = res
+report.flightStart = res
+report.flightStartOk = !!res.got &&
+  Math.abs(res.got.tx - res.want.tx) < 2 &&
+  Math.abs(res.got.ty - res.want.ty) < 2 &&
+  Math.abs(res.got.sx - res.want.sx) < 0.01 &&
+  Math.abs(res.got.sy - res.want.sy) < 0.01
+
+// 落位后：飞行层必须消失，舞台不能残留任何内联变换
+await sleep(600)
+report.afterFlight = await page.evaluate(() => {
+  const m = document.querySelector('.main-area')
+  const cs = getComputedStyle(m)
+  return {
+    ghostGone: !document.querySelector('.main-ghost'),
+    transform: cs.transform,
+    opacity: cs.opacity,
+    radius: cs.borderRadius,
+    willChange: cs.willChange
+  }
+})
 
 // ---------- 3. 头像页 ----------
 await page.goto(`${BASE}/?v=avatar`, { waitUntil: 'networkidle' })
