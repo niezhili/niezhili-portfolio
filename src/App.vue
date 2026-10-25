@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { navItems } from './data/content.js'
 import StageStrip from './components/StageStrip.vue'
 import TopBar from './components/TopBar.vue'
@@ -11,25 +11,39 @@ import EducationView from './views/EducationView.vue'
 import ProjectsView from './views/ProjectsView.vue'
 import CompetitionsView from './views/CompetitionsView.vue'
 import HonorsView from './views/HonorsView.vue'
+import AvatarView from './views/AvatarView.vue'
 
-// 支持 ?v=proj 之类深链，方便直接分享到某一页（键名与 navItems 一致）
+const STAGE_KEYS = ['avatar', ...navItems.map(n => n.key)]
+
+// 支持 ?v=proj 之类深链，方便直接分享到某一页
 function initialRoute() {
   try {
     const v = new URLSearchParams(window.location.search).get('v')
-    if (v && navItems.some(n => n.key === v)) return v
+    if (v && STAGE_KEYS.includes(v)) return v
   } catch (e) { /* ignore */ }
   return 'home'
 }
 
 const route = ref(initialRoute())
+const pendingKey = ref(null)
+const phase = ref('idle')            // idle | out | in
+const busy = computed(() => phase.value !== 'idle')
+const activeKey = computed(() => pendingKey.value ?? route.value)
 
-// 台前调度多窗口条：左侧纵向堆叠迷你窗口（头像 + 5 个页面），
-// 点击哪扇窗口主舞台就切到哪一页，窗口条常驻可见，无展开/收起状态。
+// 台前调度：左侧窗口条 + 中央舞台。
+// 顺序固定（头像 → 教育 → 项目 → 竞赛 → 荣誉），当前页从条中抽出、其余补位；
+// 主页 = 桌面，不占卡片位，子页覆盖它。
+const stripOrder = computed(() =>
+  STAGE_KEYS.filter(k => k !== activeKey.value && k !== 'home')
+)
+
+const mainEl = ref(null)
+const stripRef = ref(null)
 
 const showPasscode = ref(false)
 const showCMS = ref(false)
 
-// auto-scale
+// ---------- 舞台缩放 ----------
 const stageEl = ref(null)
 const scale = ref(1)
 const offset = ref({ x: 0, y: 0 })
@@ -37,11 +51,8 @@ const offset = ref({ x: 0, y: 0 })
 function computeScale() {
   const W = window.innerWidth
   const H = window.innerHeight
-  // never scale up beyond the 1280×800 design — only shrink on narrow screens,
-  // so the canvas always keeps a visible margin of breathing room around it
   const s = Math.min(1, W / 1280, H / 800)
   scale.value = s
-  // center
   const scaledW = 1280 * s
   const scaledH = 800 * s
   offset.value = {
@@ -50,21 +61,148 @@ function computeScale() {
   }
 }
 
+// ---------- FLIP：窗口在舞台与条之间飞行 ----------
+const wait = ms => new Promise(r => setTimeout(r, ms))
+// 开发调试：?slowstage=4 把切换动画放慢 4 倍，便于逐帧检查（生产忽略）
+const SLOW = import.meta.env.DEV ? Math.max(1, Math.min(8, Number(new URLSearchParams(location.search).get('slowstage') || 1))) : 1
+// 切换前会用 Escape 广播关掉页内浮层；这个标志防止该广播反过来触发「Esc 回桌面」
+let closingOverlays = false
+
+// 把元素矩形换算到「未缩放」的画布坐标（canvas-root 有 scale）
+function canvasRect(el) {
+  const rootEl = document.querySelector('.canvas-root')
+  if (!rootEl || !el) return null
+  const rb = rootEl.getBoundingClientRect()
+  const s = scale.value || 1
+  const r = el.getBoundingClientRect()
+  return { x: (r.left - rb.left) / s, y: (r.top - rb.top) / s, w: r.width / s, h: r.height / s }
+}
+
+function frameTransform(from, main) {
+  const sx = from.w / main.w
+  const sy = from.h / main.h
+  return {
+    transform: `translate(${from.x - main.x}px, ${from.y - main.y}px) scale(${sx}, ${sy})`,
+    radius: Math.min(120, 14 / Math.max(Math.min(sx, sy), 0.04))
+  }
+}
+
+async function switchTo(key) {
+  if (busy.value || key === route.value || !STAGE_KEYS.includes(key)) return
+
+  // 关闭页内浮层（灯箱 / 预览窗都会响应 Escape）
+  closingOverlays = true
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+  await nextTick()
+  closingOverlays = false
+
+  const el = mainEl.value
+  const main = canvasRect(el)
+  const outgoing = route.value
+  // 目标卡片的位置必须在条重排之前量（重排后它就不在条里了）
+  const inSlot = stripRef.value?.root?.querySelector(`[data-key="${key}"]`)
+  const inRect = inSlot ? canvasRect(inSlot) : null
+
+  // 条先重排：旧页插回它的槽位，当前页被抽出
+  pendingKey.value = key
+  await nextTick()
+  const outSlot = stripRef.value?.root?.querySelector(`[data-key="${outgoing}"]`)
+  const outRect = outgoing === 'home' ? null : (outSlot ? canvasRect(outSlot) : null)
+
+  el.style.willChange = 'transform'
+
+  // ---------- 离场 ----------
+  phase.value = 'out'
+  if (outRect) {
+    const end = frameTransform(outRect, main)
+    const anim = el.animate(
+      [
+        { transform: 'translate(0px, 0px) scale(1, 1)', borderRadius: '0px' },
+        { transform: end.transform, borderRadius: `${end.radius}px` }
+      ],
+      { duration: 200 * SLOW, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' }
+    )
+    // 用定时器而不是 anim.finished：某些环境里该 Promise 会提前决议，导致离场被跳过
+    await wait(200 * SLOW)
+    // 先写内联终态，再 cancel —— 顺序反了会闪回全尺寸
+    el.style.transform = end.transform
+    el.style.borderRadius = `${end.radius}px`
+    anim.cancel()
+  } else {
+    // 离开桌面：不飞走，原地压暗后退，由新页盖上来
+    await wait(140)
+  }
+
+  // ---------- 提交 ----------
+  route.value = key
+  pendingKey.value = null
+  await nextTick()
+
+  // ---------- 入场 ----------
+  phase.value = 'in'
+  let start = { transform: 'translate(0px, 0px) scale(.985, .985)', radius: 0 }
+  if (inRect) start = frameTransform(inRect, main)
+  el.style.transform = start.transform
+  el.style.borderRadius = `${start.radius}px`
+
+  const anim = el.animate(
+    [
+      { transform: start.transform, borderRadius: `${start.radius}px` },
+      { transform: 'translate(0px, 0px) scale(1, 1)', borderRadius: '0px' }
+    ],
+    { duration: 300 * SLOW, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' }
+  )
+  await wait(300 * SLOW)
+  anim.cancel()
+
+  // ---------- 收尾：必须清干净，will-change 也会让 fixed 后代被捕获 ----------
+  el.style.transform = ''
+  el.style.borderRadius = ''
+  el.style.willChange = ''
+  phase.value = 'idle'
+
+  try {
+    const url = new URL(location.href)
+    url.searchParams.set('v', key)
+    history.replaceState(null, '', url)
+  } catch (e) { /* file:// 或沙箱环境忽略 */ }
+}
+
+// ---------- 键盘 ----------
+function onStageKey(e) {
+  if (e.key === 'Escape') {
+    if (!closingOverlays && route.value === 'avatar' && !busy.value) switchTo('home')
+    return
+  }
+  if (!(e.ctrlKey || e.metaKey)) return
+  if (busy.value || showCMS.value || showPasscode.value) return
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+  e.preventDefault()
+  const keys = navItems.map(n => n.key)
+  const i = keys.indexOf(route.value)
+  const base = i < 0 ? 0 : i
+  const dir = e.key === 'ArrowRight' ? 1 : -1
+  switchTo(keys[(base + dir + keys.length) % keys.length])
+}
+
 onMounted(() => {
   computeScale()
   window.addEventListener('resize', computeScale)
+  window.addEventListener('keydown', onStageKey)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', computeScale)
+  window.removeEventListener('keydown', onStageKey)
 })
 
 // current page title (e.g. 项目经历) — shown centered in the top bar
-const currentTitle = computed(() => navItems.find(n => n.key === route.value)?.label || '')
+const currentTitle = computed(() => {
+  if (route.value === 'avatar') return '个人资料'
+  return navItems.find(n => n.key === route.value)?.label || ''
+})
 
-function navigate(key) { route.value = key }
 function openCMS() {
-  // 本次会话已验证过 → 直接进入，不再要求指纹/密码
   if (isSessionUnlocked()) {
     showCMS.value = true
     return
@@ -80,7 +218,7 @@ function closePasscode() { showPasscode.value = false }
 function closeCMS() { showCMS.value = false }
 function onPublish() {
   showCMS.value = false
-  route.value = 'home'
+  switchTo('home')
 }
 </script>
 
@@ -88,15 +226,26 @@ function onPublish() {
   <div ref="stageEl" class="canvas-stage">
     <div
       class="canvas-root"
+      :class="{ 'stage-busy': busy, 'stage-out': phase === 'out', 'stage-in': phase === 'in' }"
       :style="{
-        transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`
+        transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+        '--veil-delay': `${140 * SLOW}ms`,
+        '--veil-dur': `${60 * SLOW}ms`,
+        '--veil-in-delay': `${60 * SLOW}ms`,
+        '--veil-in-dur': `${220 * SLOW}ms`
       }"
     >
-      <!-- 台前调度多窗口条：头像 + 5 个页面各一扇迷你窗口，点击即切换舞台 -->
-      <StageStrip :route="route" @navigate="navigate" />
+      <!-- 台前调度窗口条：头像窗 + 各页面窗，点击即把该窗口送到舞台 -->
+      <StageStrip
+        ref="stripRef"
+        :order="stripOrder"
+        :hidden-key="phase === 'out' ? route : null"
+        :busy="busy"
+        @pick="switchTo"
+      />
 
-      <!-- Main area -->
-      <div class="main-area">
+      <!-- 舞台 -->
+      <div ref="mainEl" class="main-area" :inert="busy">
         <TopBar
           :title="currentTitle"
           @open-cms="openCMS"
@@ -108,6 +257,7 @@ function onPublish() {
           <ProjectsView     v-else-if="route === 'proj'" />
           <CompetitionsView v-else-if="route === 'comp'" />
           <HonorsView       v-else-if="route === 'honor'" />
+          <AvatarView       v-else-if="route === 'avatar'" />
         </div>
       </div>
 
@@ -134,8 +284,6 @@ function onPublish() {
 <style scoped>
 .canvas-root { transition: transform 0.18s ease; }
 
-/* 窗口条贴左缘、竖向居中；单窗 132px + 聚焦态右移 8px，
-   主舞台 left: 160px 让出净空（视宽计算：16 + 132·cos22° + 8 ≈ 146） */
 .main-area {
   position: absolute;
   top: 16px;
@@ -148,13 +296,34 @@ function onPublish() {
   gap: 22px;
   overflow: hidden;
 }
+/* 飞行期间舞台要盖在窗口条之上（条是 45） */
+.stage-busy .main-area { z-index: 46; }
+
+/* 白色窗口面：内容是可见的，先让窗口带着内容缩小 120ms，再被白面盖住，
+   提交瞬间用不透明的白面藏住换页，最后在放大过程中揭开新页 */
+.main-area::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms linear;
+}
+.stage-out .main-area::after {
+  opacity: 1;
+  transition: opacity var(--veil-dur, 60ms) linear var(--veil-delay, 140ms);
+}
+.stage-in .main-area::after {
+  opacity: 0;
+  transition: opacity var(--veil-in-dur, 220ms) linear var(--veil-in-delay, 60ms);
+}
 
 .page-scroll {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  /* breathing room so hover-scaled cards (scale 1.02) aren't clipped —
-     padding + equal negative margin keeps the visual layout unchanged */
   padding: 10px 14px 10px 10px;
   margin: -10px -14px -10px -10px;
 }
@@ -165,4 +334,8 @@ function onPublish() {
 /* Modal transitions */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.22s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .main-area::after { transition-duration: 0ms !important; transition-delay: 0ms !important; }
+}
 </style>

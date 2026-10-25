@@ -1,240 +1,226 @@
 <script setup>
-import { ref } from 'vue'
-import { profile, navItems } from '../data/content.js'
+import { ref, onBeforeUpdate, onUpdated, nextTick } from 'vue'
+import { navItems, profile } from '../data/content.js'
 import { siteData } from '../store/siteData.js'
-import AvatarLightbox from './AvatarLightbox.vue'
 
-// 台前调度多窗口条：左侧纵向堆叠 6 扇迷你窗口（头像 + 5 个页面），
-// 点击哪扇窗口，主舞台就切到哪一页。当前页窗口白底前突（像被聚焦的窗口）。
-defineProps({ route: String })
-const emit = defineEmits(['navigate'])
+// 台前调度窗口条：头像窗（个人资料）+ 各页面窗
+// - 顺序固定（由 order 传入），当前页不在条中
+// - 卡片保持梯形透视、半透明、无描边，左下角挂一枚页面图标（对齐 macOS 观感）
+// - 槽位重排用手写 FLIP（祖先有 scale，TransitionGroup 会补偿错位）
+const props = defineProps({
+  order: { type: Array, required: true },
+  hiddenKey: { type: String, default: null },
+  busy: { type: Boolean, default: false }
+})
+const emit = defineEmits(['pick'])
 
-const showAvatarZoom = ref(false)
+const root = ref(null)
 
-// 每扇页面窗口的迷你内容预览（不同宽度的横条模拟各自版式）
-const previews = {
-  home:  ['100%', '68%'],
-  edu:   ['88%', '52%'],
-  proj:  ['100%', '80%', '60%'],
-  comp:  ['94%', '62%']
+const labelOf = key => key === 'avatar'
+  ? '个人资料'
+  : (navItems.find(n => n.key === key)?.label || key)
+
+// 每页的线框示意宽度（三条横条，模拟各自版式）
+const WIRE = {
+  edu:   [100, 72, 48],
+  proj:  [100, 86, 60],
+  comp:  [94, 94, 56],
+  honor: [78, 100, 66]
 }
+const wireOf = key => WIRE[key] || [96, 78, 54]
+
+// ---------- 槽位重排：前后对比 top 差值，用 WAAPI 补一段位移 ----------
+let prevTops = {}
+function tops() {
+  const m = {}
+  if (!root.value) return m
+  root.value.querySelectorAll('[data-key]').forEach(el => {
+    m[el.dataset.key] = el.getBoundingClientRect().top
+  })
+  return m
+}
+// canvas 可能被缩放，位移量要换算回未缩放坐标
+function canvasScale() {
+  const c = document.querySelector('.canvas-root')
+  if (!c) return 1
+  return c.getBoundingClientRect().width / 1280 || 1
+}
+
+onBeforeUpdate(() => { prevTops = tops() })
+onUpdated(() => {
+  if (!root.value) return
+  const k = canvasScale()
+  root.value.querySelectorAll('[data-key]').forEach(el => {
+    const before = prevTops[el.dataset.key]
+    if (before == null) return
+    const delta = (before - el.getBoundingClientRect().top) / k
+    if (Math.abs(delta) < 1) return
+    el.animate(
+      [{ transform: `translateY(${delta}px)` }, { transform: 'translateY(0px)' }],
+      { duration: 260, easing: 'cubic-bezier(.32,.72,0,1)' }
+    )
+  })
+})
+
+function pick(key) {
+  if (props.busy) return
+  emit('pick', key)
+}
+
+defineExpose({ root })
 </script>
 
 <template>
-  <aside class="stage-strip">
-    <!-- 头像窗口：个人资料 -->
+  <aside ref="root" class="stage-strip" :class="{ busy }">
     <button
-      class="win win-profile"
+      v-for="key in order"
+      :key="key"
+      class="slot"
+      :class="[key === 'avatar' ? 'slot-avatar' : 'slot-win', { hidden: key === hiddenKey }]"
+      :data-key="key"
       type="button"
-      aria-label="查看头像大图"
-      @click="showAvatarZoom = true"
+      :aria-label="`打开${labelOf(key)}`"
+      @click="pick(key)"
     >
-      <div class="win-head">
-        <img class="win-avatar" :src="siteData.avatar" :alt="profile.name" />
-        <div class="win-id">
-          <div class="win-name">{{ profile.name }}</div>
-          <div class="win-name-en">{{ profile.nameEn }}</div>
+      <!-- 头像窗：44px 正圆，只有画面没有标题 -->
+      <template v-if="key === 'avatar'">
+        <img class="avatar-img" :src="siteData.avatar" :alt="profile.name" />
+      </template>
+
+      <!-- 页面窗：页名 + 线框示意 + 左下角图标 -->
+      <template v-else>
+        <div class="win-head">
+          <span class="win-title">{{ labelOf(key) }}</span>
         </div>
-      </div>
-      <div class="win-sub">{{ profile.roles.join(' / ') }}</div>
+        <div class="wire" aria-hidden="true">
+          <i v-for="(w, i) in wireOf(key)" :key="i" :style="{ width: w + '%' }" />
+        </div>
+        <span class="badge" aria-hidden="true">
+          <svg v-if="key === 'edu'" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M3 9l9-4 9 4-9 4-9-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M7 11.5V16c0 1.5 2.2 2.5 5 2.5s5-1 5-2.5v-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg v-else-if="key === 'proj'" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M4 8l8-4 8 4-8 4-8-4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M4 13l8 4 8-4M4 17.5l8 4 8-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg v-else-if="key === 'comp'" width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M7 4h10v4a5 5 0 01-10 0V4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M7 5H4v2a3 3 0 003 3M17 5h3v2a3 3 0 01-3 3M12 13v4M9 20h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="9" r="5" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M9 13.5L8 21l4-2 4 2-1-7.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      </template>
     </button>
-
-    <!-- 页面窗口：一扇一页 -->
-    <button
-      v-for="item in navItems"
-      :key="item.key"
-      class="win"
-      :class="{ active: route === item.key }"
-      type="button"
-      @click="emit('navigate', item.key)"
-    >
-      <div class="win-head">
-        <span class="nav-dot" :class="item.dot" />
-        <span class="win-title">{{ item.label }}</span>
-      </div>
-      <!-- 迷你窗口预览：横条 / 荣誉墙用 2×2 小格 -->
-      <div class="pv" :class="item.key === 'honor' ? 'pv-grid' : 'pv-bars'" aria-hidden="true">
-        <template v-if="item.key === 'honor'">
-          <i v-for="n in 4" :key="n" class="pv-cell" />
-        </template>
-        <template v-else>
-          <i
-            v-for="(w, n) in previews[item.key]"
-            :key="n"
-            class="pv-bar"
-            :style="{ width: w }"
-          />
-        </template>
-      </div>
-    </button>
-
-    <div class="strip-foot">Copyright 2026 · Portfolio</div>
-
-    <AvatarLightbox
-      v-if="showAvatarZoom"
-      @close="showAvatarZoom = false"
-    />
   </aside>
 </template>
 
 <style scoped>
 .stage-strip {
   position: absolute;
-  left: 16px;
+  left: 8px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: flex-start;
+  gap: var(--stage-gap);
   z-index: 45;
 }
+.stage-strip.busy { pointer-events: none; }
 
-/* 每扇窗口 = 一块梯形玻璃卡（左缘为轴，远边收窄），和台前调度的侧边缩略图一致 */
-/* 六扇窗口统一尺寸：132×70。尺寸一律不随激活态变化，
-   否则会出现「大小不一样」——聚焦只靠明度与投影表达 */
-.win {
-  box-sizing: border-box;
-  width: 132px;
-  height: 70px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  border-radius: 14px;
+/* 通用槽位：梯形透视、无描边、半透明 */
+.slot {
+  position: relative;
+  padding: 0;
+  border: none;
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(30px) saturate(140%);
   -webkit-backdrop-filter: blur(30px) saturate(140%);
   box-shadow: 0 14px 32px rgba(31, 31, 89, 0.2);
-  text-align: left;
-  cursor: pointer;
-  overflow: hidden;
   transform-origin: left center;
   transform: perspective(700px) rotateY(22deg);
-  transition: background 0.18s ease, box-shadow 0.18s ease;
+  cursor: pointer;
+  opacity: 0.62;
+  transition: opacity 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
-.win:hover {
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 42px rgba(31, 31, 89, 0.24);
-}
-/* 当前页窗口：纯白实底 + 更强投影 + 左侧蓝色标记 = 被聚焦（尺寸不变） */
-.win.active {
+.slot:hover {
+  opacity: 1;
   background: #fff;
-  box-shadow: 0 20px 46px rgba(31, 31, 89, 0.28), inset 3px 0 0 var(--blue-500);
+  box-shadow: 0 18px 42px rgba(31, 31, 89, 0.26);
+}
+/* 即将被替换的槽位：飞行中保持不可见，落地瞬间再出来 */
+.slot.hidden { opacity: 0 !important; }
+
+/* 头像窗 */
+.slot-avatar {
+  width: var(--stage-avatar);
+  height: var(--stage-avatar);
+  border-radius: 50%;
+  overflow: hidden;
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
 }
 
-.win-head {
+/* 页面窗 */
+.slot-win {
+  width: var(--stage-card-w);
+  height: var(--stage-card-h);
+  border-radius: var(--stage-radius);
+  padding: 10px 12px;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  text-align: left;
 }
-
-/* 覆盖全局 24px 彩色块：小窗口里统一成 14px 同色图标，
-   否则五块深浅不一的方形色块会被读成「大小/重要程度不一致」 */
-.win .nav-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-  background: rgba(10, 132, 255, 0.42);
-  box-shadow: none;
-}
-.win.active .nav-dot { background: var(--blue-500); }
-
+.win-head { display: flex; align-items: center; }
 .win-title {
   font-family: var(--font-display);
   font-size: 12.5px;
   font-weight: 500;
   color: var(--ink-2);
   letter-spacing: 0.01em;
-}
-.win.active .win-title {
-  color: var(--ink-1);
-  font-weight: 600;
+  white-space: nowrap;
 }
 
-/* 迷你内容预览条：固定高度，条数差异不改变卡片高度 */
-.pv { margin-top: auto; height: 15px; }
-.pv-bars {
+/* 线框示意：三条横条 */
+.wire {
+  margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
+  padding-bottom: 2px;
 }
-.pv-bar {
+.wire i {
   display: block;
-  height: 3px;
+  height: 4px;
   border-radius: 2px;
-  flex: none;
-  background: rgba(31, 31, 89, 0.12);
+  background: rgba(31, 31, 89, 0.14);
 }
-.win.active .pv-bar { background: rgba(10, 132, 255, 0.22); }
+.slot:hover .wire i { background: rgba(10, 132, 255, 0.2); }
 
-.pv-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 3px;
-}
-.pv-cell {
-  display: block;
-  border-radius: 3px;
-  background: rgba(31, 31, 89, 0.12);
-}
-.win.active .pv-cell { background: rgba(10, 132, 255, 0.22); }
-
-/* 头像窗口：与其他窗口同尺寸，角色行贴底 */
-.win-profile .win-sub { margin-top: auto; }
-
-.win-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  object-fit: cover;
-  background: #fff;
-  box-shadow: 0 4px 10px rgba(31, 31, 89, 0.18);
-  flex-shrink: 0;
-}
-.win-id { min-width: 0; }
-.win-name {
-  font-family: var(--font-display);
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--ink-1);
-  line-height: 1.2;
-  white-space: nowrap;
-}
-.win-name-en {
-  font-size: 7.5px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  color: var(--ink-4);
-  margin-top: 1px;
-  white-space: nowrap;
-}
-
-.win-sub {
-  font-size: 8.5px;
-  color: var(--ink-3);
-  white-space: nowrap;
-}
-.win-sub-row {
+/* 左下角图标：略凸出窗口边缘 */
+.badge {
+  position: absolute;
+  left: -6px;
+  bottom: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
-  gap: 5px;
-  margin-top: 5px;
-  font-size: 8px;
-  color: var(--ink-4);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  justify-content: center;
+  color: var(--ink-1);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 10px rgba(31, 31, 89, 0.24);
+  transition: color 0.18s ease;
 }
-.dot { width: 4px; height: 4px; border-radius: var(--r-dot); flex-shrink: 0; }
-.dot.blue { background: var(--blue-500); }
-.dot.gray { background: var(--accent-gray); }
-
-.strip-foot {
-  margin-top: 2px;
-  padding-left: 2px;
-  font-size: 8px;
-  letter-spacing: 0.04em;
-  color: var(--ink-4);
-}
+.slot:hover .badge { color: var(--blue-600); }
 </style>

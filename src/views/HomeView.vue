@@ -50,6 +50,8 @@ const emit = defineEmits(['open-cms'])
         </div>
       </aside>
     </div>
+
+    <div class="home-foot">© 2026 聂志理 · 作品集</div>
   </div>
 </template>
 
@@ -132,4 +134,13 @@ const emit = defineEmits(['open-cms'])
 }
 .side-desc { margin: 0 0 10px; font-size: 12px; color: var(--ink-2); line-height: 1.5; }
 .side-meta { font-size: 11px; color: var(--ink-3); }
+
+/* 版权行：从左侧窗口条移到这里（条里只留窗口元素） */
+.home-foot {
+  margin-top: 4px;
+  padding-left: 2px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--ink-4);
+}
 </style>

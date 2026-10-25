@@ -62,4 +62,15 @@
   /* Canvas */
   --canvas-w: 1280px;
   --canvas-h: 800px;
+
+  /* Stage Manager — 左侧窗口条与舞台切换 */
+  --stage-card-w: 132px;
+  --stage-card-h: 92px;   /* 与主区 1104×768 同比例（1.4348 vs 1.4375），FLIP 才不畸变 */
+  --stage-avatar: 44px;
+  --stage-gap: 16px;
+  --stage-radius: 14px;
+  --dur-stage-out: 200ms;
+  --dur-stage-in: 300ms;
+  --ease-stage-out: cubic-bezier(0.4, 0, 1, 1);
+  --ease-stage-in: cubic-bezier(0.22, 1, 0.36, 1);
 }
